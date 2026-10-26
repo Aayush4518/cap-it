@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import { TokenBucket } from "../../packages/rate-limiter/src/algorithm/token-bucket"
+import { TokenBucket } from "../../packages/rate-limiter/src"
 
 
 describe("TokenBucket", ()=>{
