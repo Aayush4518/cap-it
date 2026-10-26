@@ -1,0 +1,105 @@
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+build/
+out/
+coverage/
+.nyc_output/
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+!.env.test.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Testing and temporary files
+.tmp/
+.temp/
+temp/
+.cache/
+.nyc_output/
+
+# IDE and editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating system
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local databases and persistent data
+data/
+redis-data/
+*.rdb
+*.aof
+dump.rdb
+
+# Docker overrides
+docker-compose.override.yml
+
+# Local Kubernetes configuration and credentials
+.kube/
+kubeconfig
+kubeconfig.*
+*.kubeconfig
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Local monitoring data
+prometheus-data/
+grafana-data/
+
+# Load test outputs
+load-tests/results/
+load-tests/output/
+*.har
+
+# Local secrets and certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Package manager debug files
+.npm/
+.yarn/*
+!.yarn/patches/
+!.yarn/plugins/
+!.yarn/releases/
+!.yarn/versions/
+
+
+# Local architecture notes
+architecture.md
