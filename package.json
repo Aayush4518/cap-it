@@ -8,12 +8,15 @@
   },
   "private": true,
   "workspaces": [
-    "packages/rate-limiter"
+    "packages/rate-limiter",
+    "apps/api"
   ],
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.5",
+    "@types/supertest": "^7.2.1",
     "eslint": "^10.13.0",
+    "supertest": "^7.3.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.0",
     "vitest": "^5.0.5"
