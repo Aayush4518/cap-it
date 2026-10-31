@@ -8,6 +8,7 @@ export interface RateLimitDecision extends ConsumeResult{
 
 export class InMemoryRateLimitStore{
     private readonly buckets= new Map<string, Map<string, TokenBucket>>()
+    constructor(private readonly now: () => number = Date.now) {}
 
     consume(
         clientId: string, 
@@ -22,6 +23,7 @@ export class InMemoryRateLimitStore{
 
         if(!policyBuckets){
             policyBuckets = new Map<string, TokenBucket>()
+            this.buckets.set(policy.id, policyBuckets);
 
         }
         let bucket = policyBuckets.get(clientId)
@@ -29,7 +31,8 @@ export class InMemoryRateLimitStore{
         if(!bucket){
             bucket = new TokenBucket({
                 capacity: policy.capacity,
-                refillRatePerSecond: policy.refillRatePerSecond
+                refillRatePerSecond: policy.refillRatePerSecond,
+                now: this.now
             })
             policyBuckets.set(clientId, bucket)
         }
