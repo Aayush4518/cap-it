@@ -1,11 +1,11 @@
 import { TokenBucket, type ConsumeResult } from "../algorithm/token-bucket";
 import type { RateLimitPolicy } from "../policies/default-policy";
+import type { RateLimitDecision, RateLimitStore } from "..";
 
 export interface RateLimitDecision extends ConsumeResult{
     capacity: number
 
 }
-
 export class InMemoryRateLimitStore{
     private readonly buckets= new Map<string, Map<string, TokenBucket>>()
     constructor(private readonly now: () => number = Date.now) {}
