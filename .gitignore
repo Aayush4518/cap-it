@@ -12,7 +12,7 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
-tsconfig.json
+# tsconfig.json
 
 # Environment variables and secrets
 .env
