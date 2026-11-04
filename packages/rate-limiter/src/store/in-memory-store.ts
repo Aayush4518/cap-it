@@ -1,21 +1,17 @@
-import { TokenBucket, type ConsumeResult } from "../algorithm/token-bucket";
+import { TokenBucket } from "../algorithm/token-bucket";
 import type { RateLimitPolicy } from "../policies/default-policy";
-import type { RateLimitDecision, RateLimitStore } from "..";
+import type { RateLimitDecision, RateLimitStore } from "./rate-limit-store";
 
-export interface RateLimitDecision extends ConsumeResult{
-    capacity: number
-
-}
-export class InMemoryRateLimitStore{
+export class InMemoryRateLimitStore implements RateLimitStore {
     private readonly buckets= new Map<string, Map<string, TokenBucket>>()
     constructor(private readonly now: () => number = Date.now) {}
 
-    consume(
+    async consume(
         clientId: string, 
         policy: RateLimitPolicy,
         cost =1, 
 
-    ): RateLimitDecision{
+    ): Promise<RateLimitDecision> {
         if(clientId.trim().length === 0){
             throw new Error("clientId must not be empty")
         }

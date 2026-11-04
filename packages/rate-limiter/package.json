@@ -4,5 +4,8 @@
   "scripts": {
     "test": "vitest run"
   },
-  "author": ""
+  "author": "",
+  "dependencies": {
+    "redis": "^6.3.1"
+  }
 }

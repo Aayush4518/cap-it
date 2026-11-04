@@ -5,10 +5,11 @@ import { requireApiKey } from "./middleware/api-key.middleware";
 // import { createRateLimitMiddleware } from "./middleware/rate-limit.middleware";
 // import { InMemoryRateLimitStore, defaultPolicy } from "../../../packages/rate-limiter/src";
 // import { defaultPolicy } from "../../../packages/rate-limiter/src";
+import type { RateLimitStore } from "../../../packages/rate-limiter/src";
 import { InMemoryRateLimitStore, defaultPolicy } from "../../../packages/rate-limiter/src";
 import { createRateLimitMiddleware } from "./middleware/rate-limit.middleware";
 
-export function createApp(apiKeys: ReadonlyMap<string, string>= new Map(), store: InMemoryRateLimitStore = new InMemoryRateLimitStore()){
+export function createApp(apiKeys: ReadonlyMap<string, string>= new Map(), store: RateLimitStore = new InMemoryRateLimitStore()){
     const app= express()
 
     app.use(express.json())

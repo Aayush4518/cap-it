@@ -1,17 +1,17 @@
 import type {RequestHandler} from "express"
-import type { InMemoryRateLimitStore, RateLimitPolicy } from "../../../../packages/rate-limiter/src"
+import type { RateLimitStore, RateLimitPolicy } from "../../../../packages/rate-limiter/src"
 
 
 
-export function createRateLimitMiddleware(store: InMemoryRateLimitStore, policy: RateLimitPolicy): RequestHandler{
-    return(req, res, next)=>{
+export function createRateLimitMiddleware(store: RateLimitStore, policy: RateLimitPolicy): RequestHandler{
+    return async(req, res, next)=>{
         const clientId : unknown = res.locals.clientId
 
         if(typeof clientId !== "string" || clientId.trim().length=== 0){
             res.status(401).json({error: "unauthorized"})
             return
         }
-        const decision = store.consume(clientId,policy)
+        const decision = await store.consume(clientId, policy);
 
         res.set("RateLimit-Limit", String(decision.capacity))
         res.set("RateLimit-Remaining", String(Math.floor(decision.remainingTokens)))
