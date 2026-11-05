@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import { createApp } from "../../apps/api/src/app";
-import { InMemoryRateLimitStore } from "../../packages/rate-limiter/src";
+import { InMemoryRateLimitStore, RateLimitStore } from "../../packages/rate-limiter/src";
 
 describe("GET /health", ()=>{
     it("returns a healthy 200 status", async()=>{
@@ -53,4 +53,32 @@ it("allows three demo requests, then returns 429", async()=>{
         expect(blocked.headers["ratelimit-limit"]).toBe("3")
         expect(blocked.headers["ratelimit-remaining"]).toBe("0")
         expect(blocked.headers["retry-after"]).toBe("1")
+})
+
+
+it("returns a generic 500 response with a request ID when the store fails", async()=>{
+    const apiKeys = new Map([["test-key", "client-id"]])
+    const failingStore: RateLimitStore= {
+        async consume(){
+            throw new Error("synthtic store failure")
+        }
+    }
+
+    const errorLog = vi.spyOn(console, "error").mockImplementation(()=> undefined)
+
+    try{
+        const response = await request(createApp(apiKeys, failingStore))
+            .get("/demo")
+            .set("x-api-key", "test-key")
+        
+        const requestId = response.headers["x-request-id"]
+
+        expect(response.status).toBe(500)
+        expect(requestId).toBeTruthy()
+        expect(response.body).toEqual({
+            error: "internal_server_error", requestId
+        })
+    }finally{
+            errorLog.mockRestore()
+        }
 })
