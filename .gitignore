@@ -10,6 +10,8 @@ out/
 coverage/
 .nyc_output/
 
+mermaid-diagram.png
+
 # TypeScript
 *.tsbuildinfo
 # tsconfig.json
