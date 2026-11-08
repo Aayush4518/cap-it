@@ -56,7 +56,7 @@ it("allows three demo requests, then returns 429", async()=>{
 })
 
 
-it("returns a generic 500 response with a request ID when the store fails", async()=>{
+it("returns a generic 503 response with a request ID when the store fails", async()=>{
     const apiKeys = new Map([["test-key", "client-id"]])
     const failingStore: RateLimitStore= {
         async consume(){
@@ -73,10 +73,10 @@ it("returns a generic 500 response with a request ID when the store fails", asyn
         
         const requestId = response.headers["x-request-id"]
 
-        expect(response.status).toBe(500)
+        expect(response.status).toBe(503)
         expect(requestId).toBeTruthy()
         expect(response.body).toEqual({
-            error: "internal_server_error", requestId
+            error: "rate_limit_store_unavailable", requestId
         })
     }finally{
             errorLog.mockRestore()
