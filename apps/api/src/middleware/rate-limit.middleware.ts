@@ -1,6 +1,6 @@
 import type { RequestHandler } from "express"
 import type { RateLimitStore, RateLimitPolicy } from "../../../../packages/rate-limiter/src"
-import { rateLimitDecisions, rateLimitStoreDuration } from "../metrics"
+import { rateLimitDecisions, rateLimitStoreDuration, rateLimitStoreErrors } from "../metrics"
 import { performance } from "node:perf_hooks"
 // import { error } from "node:console"
 // import { request } from "node:http"
@@ -15,22 +15,26 @@ export function createRateLimitMiddleware(store: RateLimitStore, policy: RateLim
             return
         }
         const startedAt = performance.now()
-        let decision : Awaited<ReturnType<RateLimitStore["consume"]>>
-        try{
+        let decision: Awaited<ReturnType<RateLimitStore["consume"]>>
+        try {
 
             decision = await store.consume(clientId, policy)
-        }catch{
+        } catch {
+            rateLimitStoreErrors.labels(policy.id).inc()
             res.status(503).json({
                 error: "rate_limit_store_unavailable",
                 requestId: res.locals.requestId
             })
             return
-        }finally{
+        } finally {
 
             rateLimitStoreDuration
-            .labels(policy.id)
-            .observe((performance.now() - startedAt) / 1000)
+                .labels(policy.id)
+                .observe((performance.now() - startedAt) / 1000)
         }
+        rateLimitDecisions
+            .labels(policy.id, decision.allowed ? "allowed" : "rejected")
+            .inc()
 
         res.set("RateLimit-Limit", String(decision.capacity))
         res.set("RateLimit-Remaining", String(Math.floor(decision.remainingTokens)))

@@ -12,3 +12,9 @@ export const rateLimitStoreDuration = new Histogram({
   help: "Duration of rate-limit store operations in seconds.",
   labelNames: ["policy"] as const,
 })
+
+export const rateLimitStoreErrors = new Counter({
+  name: "capit_rate_limit_store_errors_total",
+  help: "Total rate-limit store operation failures, grouped by policy",
+  labelNames: ["policy"] as const,
+})
