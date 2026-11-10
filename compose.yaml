@@ -67,6 +67,7 @@ services:
       - ./tests/load:/scripts:ro
     environment:
       CAPIT_API_KEY: ${CAPIT_API_KEY}
+      API_URL: http://api1:3000
       API1_URL: http://api1:3000
       API2_URL: http://api2:3000
     depends_on:

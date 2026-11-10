@@ -127,13 +127,31 @@ The Redis integration test expects Redis at `redis://localhost:6379` unless `RED
 
 ## Load testing with k6
 
-The scripts in `tests/load` exercise the API at different virtual-user levels. For the distributed 500-VU scenario, run k6 as a temporary Compose service:
+Each script sends one request per iteration, then sleeps for one second. The request totals below are estimates based on that pacing; actual totals vary slightly with request latency and k6 scheduling.
+
+| Script | VU profile | Duration | Approx. requests |
+| --- | --- | --- | ---: |
+| `baseline.js` | 2 steady VUs | 10 seconds | 20 |
+| `burst.js` | 1 to 2 (2s), 2 to 10 (1s), hold 10 (5s), 10 to 0 (2s) | 10 seconds | 70 |
+| `medium.js` | 50 steady VUs | 10 seconds | 500 |
+| `heavy.js` | 100 steady VUs | 10 seconds | 1,000 |
+| `extreme.js` | 500 steady VUs | 10 seconds | 5,000 |
+| `stress.js` | 1 to 10 (10s), 10 to 20 (20s), 20 to 0 (10s) | 40 seconds | 450 |
+| `extreme_distributed.js` | 0 to 100 (10s), 100 to 250 (10s), 250 to 500 (10s), hold 500 (10s), 500 to 0 (5s) | 45 seconds | 12,250 total, about 6,125 per API |
+
+The Compose k6 service runs inside the same network as the APIs, so single-instance scripts target `api1:3000` and avoid the Windows host-port path. For example, run the 500-VU single-instance test with:
+
+```powershell
+docker compose --profile load run --rm k6 run /scripts/extreme.js
+```
+
+The other single-instance scripts use the same command pattern, replacing `extreme.js` with `baseline.js`, `burst.js`, `medium.js`, `heavy.js`, or `stress.js`. For the distributed 500-VU scenario, run:
 
 ```powershell
 docker compose --profile load run --rm k6 run /scripts/extreme_distributed.js
 ```
 
-This runs k6 inside the Compose network and targets `api1:3000` and `api2:3000` directly. The script ramps through 100, 250, and 500 virtual users, then holds at 500 briefly. The API health checks make Compose wait for both instances before starting the load test.
+This targets `api1:3000` and `api2:3000` directly, ramping through 100, 250, and 500 virtual users before holding at 500 briefly. The 500 VUs are split between the two APIs. The API health checks make Compose wait for both instances before starting the load test.
 
 If you run k6 directly on your computer instead, pass the same key as `.env` and the script uses the published host ports:
 

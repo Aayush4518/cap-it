@@ -14,8 +14,10 @@ export const options = {
   },
 }
 
+const apiUrl = __ENV.API_URL ?? "http://localhost:3000"
+
 export default function () {
-  const response = http.get("http://localhost:3000/demo", {
+  const response = http.get(`${apiUrl}/demo`, {
     headers: {
       "x-api-key": __ENV.CAPIT_API_KEY,
     },
