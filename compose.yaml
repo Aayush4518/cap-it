@@ -1,0 +1,55 @@
+services:
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api1:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      CAPIT_API_KEY: ${CAPIT_API_KEY}
+      REDIS_URL: redis://redis:6379
+      PORT: 3000
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  api2:
+    build: .
+    ports:
+      - "3002:3000"
+    environment:
+      CAPIT_API_KEY: ${CAPIT_API_KEY}
+      REDIS_URL: redis://redis:6379
+      PORT: 3000
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+    name: cap-it-prometheus-data
+  grafana-data:
+    name: cap-it-grafana-data

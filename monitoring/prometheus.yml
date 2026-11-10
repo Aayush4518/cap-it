@@ -5,4 +5,5 @@ scrape_configs:
   - job_name: "cap-it-api"
     metrics_path: /metrics
     static_configs:
-      - targets: ["host.docker.internal:3000", "host.docker.internal:3002"]
+      # - targets: ["host.docker.internal:3000", "host.docker.internal:3002"]
+      - targets: ["api1:3000", "api2:3000"]
