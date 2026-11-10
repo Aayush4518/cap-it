@@ -161,12 +161,11 @@ Add screenshots in the spaces below when you have them.
 
 ### Grafana dashboard
 
-<!-- Grafana screenshot -->
+![alt text](capit_dashboard_showcase.png)
 
 
 ### Prometheus targets
-
-<!-- screenshot of the Prometheus targets page -->
+![alt text](capit_prometheus_targets_showcase.png)
 
 
 ## Project layout
