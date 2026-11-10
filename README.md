@@ -133,7 +133,7 @@ The scripts in `tests/load` exercise the API at different virtual-user levels. F
 docker compose --profile load run --rm k6 run /scripts/extreme_distributed.js
 ```
 
-This runs k6 inside the Compose network and targets `api1:3000` and `api2:3000` directly. The script ramps from 100 to 500 virtual users, then holds at 500 briefly. The API health checks make Compose wait for both instances before starting the load test.
+This runs k6 inside the Compose network and targets `api1:3000` and `api2:3000` directly. The script ramps through 100, 250, and 500 virtual users, then holds at 500 briefly. The API health checks make Compose wait for both instances before starting the load test.
 
 If you run k6 directly on your computer instead, pass the same key as `.env` and the script uses the published host ports:
 
@@ -142,6 +142,8 @@ k6 run -e CAPIT_API_KEY=test-key tests/load/extreme_distributed.js
 ```
 
 The load script accepts both `200` and `429` as expected responses. A transport failure such as a connection refusal means the request did not receive an HTTP response from the API.
+
+In one 500-VU run from the host, 45 requests to `localhost:3002` were refused even though API 2 was healthy afterward. The exact cause was not established; the container stats did not show obvious CPU or memory pressure. Running k6 inside the Compose network bypasses the host-published ports. Comparing that run with a host-run test can help locate the failing network path, but does not by itself prove the cause.
 
 ## Useful Docker commands
 
@@ -159,12 +161,12 @@ Add screenshots in the spaces below when you have them.
 
 ### Grafana dashboard
 
-<!-- Add a Grafana dashboard screenshot here. -->
+<!-- Grafana screenshot -->
 
 
 ### Prometheus targets
 
-<!-- Add a screenshot of the Prometheus targets page showing both API instances as UP. -->
+<!-- screenshot of the Prometheus targets page -->
 
 
 ## Project layout
@@ -180,6 +182,4 @@ Dockerfile                API container image
 compose.yaml              Local Redis, API, Prometheus, and Grafana stack
 ```
 
-## Learning note
 
-Cap-It is built as a hands-on learning project. The implementation is intentionally easy to explore in small pieces: follow a request through the API middleware, inspect the token-bucket logic, then compare the behavior across API instances and in the metrics.
