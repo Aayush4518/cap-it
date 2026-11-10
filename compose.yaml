@@ -18,6 +18,12 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   api2:
     build: .
@@ -30,6 +36,12 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   prometheus:
     image: prom/prometheus
@@ -47,6 +59,21 @@ services:
       - grafana-data:/var/lib/grafana
     depends_on:
       - prometheus
+
+  k6:
+    image: grafana/k6
+    profiles: ["load"]
+    volumes:
+      - ./tests/load:/scripts:ro
+    environment:
+      CAPIT_API_KEY: ${CAPIT_API_KEY}
+      API1_URL: http://api1:3000
+      API2_URL: http://api2:3000
+    depends_on:
+      api1:
+        condition: service_healthy
+      api2:
+        condition: service_healthy
 
 volumes:
   prometheus-data:
