@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import OverviewPage from "../features/overview/OverviewPage";
+import { NotchNav } from "../components/NotchNav";
 
 const sections = [
   { id: "overview", label: "Overview" },
@@ -63,6 +64,10 @@ function App() {
   const [activeSection, setActiveSection] = useState<SectionId>("overview");
   const [theme, setTheme] = useState<Theme>(readSavedTheme);
   const activeLabel = sections.find(({ id }) => id === activeSection)?.label;
+  const navItems = sections.map((section) => ({
+    ...section,
+    icon: <NavIcon name={section.id} />,
+  }));
 
   useEffect(() => {
     try {
@@ -74,37 +79,17 @@ function App() {
 
   return (
     <div className="app-shell" data-theme={theme}>
-      <aside className="sidebar">
-        <a className="brand" href="#overview" onClick={() => setActiveSection("overview")} aria-label="Cap-It overview">
-          <span className="brand-mark" aria-hidden="true">c</span>
-          <span className="brand-name">cap-it</span>
-        </a>
-
-        <div className="sidebar-caption">WORKSPACE</div>
-        <nav className="nav-list" aria-label="Dashboard sections">
-          {sections.map(({ id, label }) => (
-            <button
-              className={`nav-item${activeSection === id ? " is-active" : ""}`}
-              key={id}
-              type="button"
-              aria-current={activeSection === id ? "page" : undefined}
-              onClick={() => setActiveSection(id)}
-            >
-              <span className="nav-icon"><NavIcon name={id} /></span>
-              <span>{label}</span>
-            </button>
-          ))}
-        </nav>
-
-        <div className="sidebar-footer">
-          <span className="environment-dot" aria-hidden="true" />
-          <span>Local environment</span>
-        </div>
-      </aside>
-
-      <main className="main-content">
-        <header className="topbar">
-          <div className="breadcrumb"><span>Workspace</span><span className="breadcrumb-separator">/</span><strong>{activeLabel}</strong></div>
+      <NotchNav
+        items={navItems}
+        activeId={activeSection}
+        onActiveChange={(id) => setActiveSection(id as SectionId)}
+        logo={(
+          <span className="notch-brand">
+            <span className="notch-brand-mark" aria-hidden="true">c</span>
+            <span className="notch-brand-name">cap-it</span>
+          </span>
+        )}
+        rightContent={(
           <button
             className="theme-toggle"
             type="button"
@@ -115,8 +100,10 @@ function App() {
             <AppearanceIcon theme={theme} />
             <span>{theme === "light" ? "Dark appearance" : "Light appearance"}</span>
           </button>
-        </header>
+        )}
+      />
 
+      <main className="main-content">
         <div className="view-transition" key={activeSection}>
           {activeSection === "overview" ? (
             <OverviewPage />
