@@ -16,11 +16,11 @@
 }
 
 .app-shell[data-theme="dark"] {
-  --notch-bg: #e1e2dc;
-  --notch-text: #252622;
-  --notch-muted: #65675f;
-  --notch-active: #c9cbc3;
-  --notch-menu: #f1f1ec;
+  --notch-bg: #242723;
+  --notch-text: #f0f0e9;
+  --notch-muted: #a5aa9f;
+  --notch-active: #393e37;
+  --notch-menu: #2c302b;
 }
 
 .desktop-brand-notch,
@@ -59,6 +59,13 @@
   padding: 0 24px 4px 22px;
   border-bottom-left-radius: 22px;
 }
+
+.notch-brand { display: inline-flex; align-items: center; gap: 8px; color: var(--notch-text); text-decoration: none; }
+.notch-brand-mark { display: grid; width: 24px; height: 24px; place-items: center; border: 1px solid color-mix(in srgb, var(--notch-text) 30%, transparent); border-radius: 7px; font-family: Georgia, serif; font-size: 17px; font-style: italic; line-height: 1; }
+.notch-brand-name { font-size: 13px; font-weight: 620; letter-spacing: -0.035em; }
+.desktop-action-notch .theme-toggle { color: var(--notch-muted); }
+.desktop-action-notch .theme-toggle:hover { border-color: color-mix(in srgb, var(--notch-text) 15%, transparent); background: var(--notch-active); color: var(--notch-text); }
+.desktop-action-notch .theme-toggle svg { color: var(--notch-text); }
 
 .notch-wing {
   position: absolute;
@@ -116,8 +123,8 @@
   }
   .mobile-notch-bar { display: flex; min-height: 47px; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 3px; }
   .mobile-brand { display: flex; min-width: 0; flex: 0 0 auto; align-items: center; }
-  .mobile-brand .brand-mark { width: 23px; height: 23px; border-color: color-mix(in srgb, var(--notch-text) 25%, transparent); color: var(--notch-text); font-size: 17px; }
-  .mobile-brand .brand-name { display: none; }
+  .mobile-brand .notch-brand-mark { width: 23px; height: 23px; font-size: 16px; }
+  .mobile-brand .notch-brand-name { display: none; }
   .mobile-menu-trigger { display: inline-flex; min-width: 0; min-height: 32px; flex: 1; align-items: center; justify-content: center; gap: 7px; padding: 0 9px; border: 0; border-radius: 999px; background: transparent; color: var(--notch-text); cursor: pointer; font-size: 11px; font-weight: 560; }
   .mobile-menu-trigger:hover, .mobile-menu-trigger[aria-expanded="true"] { background: var(--notch-active); }
   .mobile-menu-trigger .notch-item-icon { color: var(--notch-muted); }
@@ -127,7 +134,7 @@
   .mobile-action .theme-toggle { min-height: 31px; padding: 0 7px; border-color: transparent; color: var(--notch-text); font-size: 10px; }
   .mobile-action .theme-toggle:hover { border-color: color-mix(in srgb, var(--notch-text) 15%, transparent); background: var(--notch-active); }
   .mobile-action .theme-toggle svg { color: var(--notch-text); }
-  .mobile-menu { display: grid; grid-template-rows: 0fr; width: 100%; overflow: hidden; opacity: 0; visibility: hidden; transition: grid-template-rows 260ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 180ms ease, visibility 260ms; }
+  .mobile-menu { display: grid; grid-template-rows: 0fr; width: 100%; overflow: hidden; border-radius: 0 0 14px 14px; background: var(--notch-menu); opacity: 0; visibility: hidden; transition: grid-template-rows 260ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 180ms ease, visibility 260ms, background-color 260ms ease; }
   .mobile-menu.is-open { grid-template-rows: 1fr; opacity: 1; visibility: visible; }
   .mobile-menu nav { min-height: 0; overflow: hidden; padding: 0 0 5px; }
   .mobile-menu-item { display: flex; width: 100%; min-height: 39px; align-items: center; justify-content: space-between; padding: 0 10px; border: 0; border-radius: 9px; background: transparent; color: var(--notch-muted); cursor: pointer; font-size: 11px; text-align: left; }

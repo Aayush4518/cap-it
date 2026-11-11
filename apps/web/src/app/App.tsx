@@ -54,7 +54,7 @@ function AppearanceIcon({ theme }: { theme: Theme }) {
 
 function readSavedTheme(): Theme {
   try {
-    return window.localStorage.getItem("cap-it-theme") === "dark" ? "dark" : "light";
+    return window.localStorage.getItem("cap-it-theme-v2") === "light" ? "light" : "dark";
   } catch {
     return "light";
   }
@@ -70,8 +70,12 @@ function App() {
   }));
 
   useEffect(() => {
+    document.querySelector('meta[name="theme-color"]')?.setAttribute(
+      "content",
+      theme === "dark" ? "#191B19" : "#f5f5f2",
+    );
     try {
-      window.localStorage.setItem("cap-it-theme", theme);
+      window.localStorage.setItem("cap-it-theme-v2", theme);
     } catch {
       // The appearance toggle still works for this visit when storage is unavailable.
     }

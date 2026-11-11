@@ -62,8 +62,12 @@ export function NotchNav({ items, activeId, onActiveChange, logo, rightContent }
   }, [menuOpen]);
 
   const selectItem = (id: string) => {
+    const focusMobileTrigger = mobileNavRef.current?.contains(document.activeElement) ?? false;
     onActiveChange(id);
     setMenuOpen(false);
+    if (focusMobileTrigger) {
+      requestAnimationFrame(() => menuButtonRef.current?.focus());
+    }
   };
 
   return (
