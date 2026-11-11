@@ -90,6 +90,31 @@ button { color: inherit; font: inherit; }
 .chart-empty-state strong { color: var(--muted); font-size: 10px; font-weight: 550; }
 .chart-empty-state p { max-width: 320px; margin: 5px 0 0; color: var(--subtle); font-size: 9px; line-height: 1.5; }
 .compact-empty-state { min-height: 145px; }
+.chart-panel { overflow: hidden; }
+.range-picker { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 2px; padding: 2px; border: 1px solid var(--border); border-radius: 6px; background: var(--background); }
+.range-picker button { min-width: 30px; min-height: 23px; padding: 0 6px; border: 0; border-radius: 4px; background: transparent; color: var(--muted); cursor: pointer; font-size: 9px; transition: background-color 160ms ease, color 160ms ease; }
+.range-picker button:hover { color: var(--text); }
+.range-picker button.is-selected { background: var(--surface-elevated); color: var(--text); box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 8%, transparent); }
+.traffic-chart { position: relative; margin-top: 12px; }
+.chart-legend { display: flex; justify-content: flex-end; gap: 12px; margin-bottom: -2px; color: var(--muted); font-size: 9px; }
+.chart-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.chart-legend i { width: 6px; height: 6px; border-radius: 50%; }
+.legend-allowed { background: var(--green); }
+.legend-rejected { background: var(--orange); }
+.traffic-chart svg, .latency-chart svg { display: block; width: 100%; overflow: visible; }
+.traffic-chart svg { height: 126px; }
+.latency-chart { margin-top: 17px; }
+.latency-chart svg { height: 126px; }
+.chart-gridline { stroke: var(--border-soft); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.traffic-line { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.traffic-line-allowed { stroke: var(--green); }
+.traffic-line-rejected { stroke: var(--orange); }
+.traffic-line-latency { stroke: var(--accent); }
+.chart-time-labels { display: flex; justify-content: space-between; padding: 1px 2px 0; color: var(--subtle); font-size: 8px; font-variant-numeric: tabular-nums; }
+.latency-panel .panel-heading { align-items: center; }
+.policy-empty { display: grid; min-height: 76px; place-items: center; color: var(--subtle); font-size: 10px; text-align: center; }
+.health-unavailable { border-color: color-mix(in srgb, var(--orange) 25%, var(--border)); background: color-mix(in srgb, var(--orange) 6%, var(--surface)); color: var(--orange); }
+.health-unavailable .status-dot { background: var(--orange); }
 
 .lower-grid { grid-template-columns: minmax(0, 1.15fr) minmax(270px, 0.85fr); margin-top: 14px; }
 .instances-panel, .policy-panel { min-height: 190px; padding: 17px 18px; }
@@ -147,6 +172,8 @@ button { color: inherit; font: inherit; }
   .lower-grid { margin-top: 10px; }
   .chart-panel { min-height: 195px; padding: 15px; }
   .panel-period { display: none; }
+  .range-picker { gap: 0; }
+  .range-picker button { min-width: 27px; padding-inline: 4px; }
   .last-checked { font-size: 8px; }
   .policy-values { margin-top: 20px; }
 }

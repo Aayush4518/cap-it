@@ -32,6 +32,10 @@ async function startServer() {
     const app = createApp(
         new Map([[apiKey, "local-client"]]),
         new RedisRateLimitStore(redis, script),
+        {
+            instanceId: process.env.INSTANCE_ID ?? `api-${port}`,
+            getStoreConnectionStatus: () => redis.isReady ? "connected" : "disconnected",
+        },
     );
 
     const server = app.listen(port, () => {
