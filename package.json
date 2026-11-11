@@ -9,7 +9,8 @@
   "private": true,
   "workspaces": [
     "packages/rate-limiter",
-    "apps/api"
+    "apps/api",
+    "apps/web"
   ],
   "devDependencies": {
     "@eslint/js": "^10.0.1",
