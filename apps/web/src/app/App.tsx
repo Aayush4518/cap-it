@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import OverviewPage from "../features/overview/OverviewPage";
+import PlaygroundPage from "../features/playground/PlaygroundPage";
 import { NotchNav } from "../components/NotchNav";
 
 const sections = [
@@ -111,6 +112,8 @@ function App() {
         <div className="view-transition" key={activeSection}>
           {activeSection === "overview" ? (
             <OverviewPage />
+          ) : activeSection === "playground" ? (
+            <PlaygroundPage />
           ) : (
             <section className="page-placeholder" aria-labelledby="placeholder-title">
               <span className="section-kicker">CAP-IT / {activeLabel?.toUpperCase()}</span>
