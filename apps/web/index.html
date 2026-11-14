@@ -4,20 +4,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#191B19" />
-    <meta
-      name="description"
-      content="A developer dashboard for exploring the Cap-It distributed rate limiter."
-    />
+    <!-- seo:start -->
+    <title>Overview | Cap-It</title>
+    <meta name="description" content="Monitor a distributed token-bucket rate limiter. Track API health, Redis-backed decisions, request traffic, and latency in Cap-It." />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Cap-It" />
+    <meta property="og:title" content="Overview | Cap-It" />
+    <meta property="og:description" content="Monitor a distributed token-bucket rate limiter. Track API health, Redis-backed decisions, request traffic, and latency in Cap-It." />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Overview | Cap-It" />
+    <meta name="twitter:description" content="Monitor a distributed token-bucket rate limiter. Track API health, Redis-backed decisions, request traffic, and latency in Cap-It." />
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Cap-It","applicationCategory":"DeveloperApplication","operatingSystem":"Any","description":"A developer dashboard for exploring and monitoring a distributed token-bucket rate limiter."}</script>
+    <!-- seo:end -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <title>Cap-It</title>
   </head>
   <body>
     <div id="root"></div>
+    <noscript><main><h1>Cap-It distributed rate limiter dashboard</h1><p>Cap-It is a developer tool for exploring token-bucket rate limiting across API instances with Redis, Prometheus, and k6.</p><p>Enable JavaScript to use the live dashboard and request playground.</p></main></noscript>
     <script type="module" src="/src/app/main.tsx"></script>
   </body>
 </html>

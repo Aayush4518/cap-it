@@ -5,6 +5,7 @@ import "./notch-nav.css";
 export interface NotchNavItem {
   id: string;
   label: string;
+  href: string;
   icon?: ReactNode;
 }
 
@@ -84,12 +85,16 @@ export function NotchNav({ items, activeId, onActiveChange, logo, rightContent }
           <LayoutGroup id="cap-it-navigation">
             <div className="desktop-menu-items">
               {items.map((item) => (
-                <button
+                <a
                   className={`notch-link${item.id === activeId ? " is-active" : ""}`}
                   key={item.id}
-                  type="button"
+                  href={item.href}
                   aria-current={item.id === activeId ? "page" : undefined}
-                  onClick={() => selectItem(item.id)}
+                  onClick={(event) => {
+                    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                    event.preventDefault();
+                    selectItem(item.id);
+                  }}
                 >
                   {item.id === activeId && (
                     <motion.span
@@ -100,7 +105,7 @@ export function NotchNav({ items, activeId, onActiveChange, logo, rightContent }
                   )}
                   {item.icon && <span className="notch-item-icon">{item.icon}</span>}
                   <span className="notch-item-label">{item.label}</span>
-                </button>
+                </a>
               ))}
             </div>
           </LayoutGroup>
@@ -136,20 +141,24 @@ export function NotchNav({ items, activeId, onActiveChange, logo, rightContent }
         <div id="mobile-navigation-menu" className={`mobile-menu${menuOpen ? " is-open" : ""}`} aria-hidden={!menuOpen}>
           <nav aria-label="Main navigation">
             {items.map((item) => (
-              <button
+              <a
                 className={`mobile-menu-item${item.id === activeId ? " is-active" : ""}`}
                 key={item.id}
-                type="button"
+                href={item.href}
                 tabIndex={menuOpen ? 0 : -1}
                 aria-current={item.id === activeId ? "page" : undefined}
-                onClick={() => selectItem(item.id)}
+                onClick={(event) => {
+                  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                  event.preventDefault();
+                  selectItem(item.id);
+                }}
               >
                 <span className="mobile-menu-item-label">
                   {item.icon && <span className="notch-item-icon">{item.icon}</span>}
                   <span>{item.label}</span>
                 </span>
                 {item.id === activeId && <span className="mobile-menu-check" aria-hidden="true">✓</span>}
-              </button>
+              </a>
             ))}
           </nav>
         </div>

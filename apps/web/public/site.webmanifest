@@ -1,0 +1,9 @@
+{
+  "name": "Cap-It Rate Limiter Dashboard",
+  "short_name": "Cap-It",
+  "description": "Explore and monitor a distributed token-bucket rate limiter.",
+  "start_url": "/overview",
+  "display": "standalone",
+  "background_color": "#191b19",
+  "theme_color": "#191b19"
+}

@@ -1,0 +1,27 @@
+[
+  {
+    "path": "/overview",
+    "title": "Overview | Cap-It",
+    "description": "Monitor a distributed token-bucket rate limiter. Track API health, Redis-backed decisions, request traffic, and latency in Cap-It."
+  },
+  {
+    "path": "/playground",
+    "title": "API Playground | Cap-It",
+    "description": "Send API requests and run k6 load profiles against Cap-It. Inspect response codes, rate-limit headers, latency, and load-test output."
+  },
+  {
+    "path": "/policies",
+    "title": "Rate Limit Policies | Cap-It",
+    "description": "Review the active token-bucket policy, including capacity and refill rate, as reported by the Cap-It API instances."
+  },
+  {
+    "path": "/analytics",
+    "title": "Rate Limit Analytics | Cap-It",
+    "description": "Explore request volume, allowed and rejected decisions, API latency, Redis store latency, and HTTP status trends in Cap-It."
+  },
+  {
+    "path": "/instances",
+    "title": "API Instances | Cap-It",
+    "description": "Check the health and reported metrics of Cap-It API instances and their shared Redis rate-limit store."
+  }
+]

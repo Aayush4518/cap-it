@@ -161,6 +161,12 @@ This targets `api1:3000` and `api2:3000` directly, ramping through 100, 250, and
 
 The Playground **Fire test** buttons use a separate Compose-managed runner container. It starts with the API services, runs the same scripts inside Docker, and sends output back to the page. Start the web dashboard with `npm run dev --workspace=web`, enter the API key in Playground, then choose a profile. Single-instance tests use the selected API; the distributed test targets both. The runner port is published on `127.0.0.1` only, and the Vite development server also binds to loopback.
 
+### Dashboard URLs and SEO
+
+The dashboard has direct URLs for each section: `/overview`, `/playground`, `/policies`, `/analytics`, and `/instances`. Each route has its own title, description, canonical URL, Open Graph/Twitter metadata, and structured application data. The web build creates static route entry files, `robots.txt`, `404.html`, and a `sitemap.xml` when `VITE_SITE_URL` is configured.
+
+Before building for a public domain, copy `apps/web/.env.example` to `apps/web/.env` and set `VITE_SITE_URL` to the deployed site origin. Keep it unset for local-only development; local canonical URLs are set from the browser origin. The static host should serve each section's generated `index.html` at its clean URL and use `404.html` for unknown paths.
+
 If you run k6 directly on your computer instead, pass the same key as `.env` and the script uses the published host ports:
 
 ```powershell

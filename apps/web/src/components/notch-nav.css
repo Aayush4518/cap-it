@@ -97,6 +97,7 @@
   cursor: pointer;
   font-size: 11px;
   font-weight: 520;
+  text-decoration: none;
   white-space: nowrap;
   transition: color 180ms ease;
 }
@@ -137,7 +138,7 @@
   .mobile-menu { display: grid; grid-template-rows: 0fr; width: 100%; overflow: hidden; border-radius: 0 0 14px 14px; background: var(--notch-menu); opacity: 0; visibility: hidden; transition: grid-template-rows 260ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 180ms ease, visibility 260ms, background-color 260ms ease; }
   .mobile-menu.is-open { grid-template-rows: 1fr; opacity: 1; visibility: visible; }
   .mobile-menu nav { min-height: 0; overflow: hidden; padding: 0 0 5px; }
-  .mobile-menu-item { display: flex; width: 100%; min-height: 39px; align-items: center; justify-content: space-between; padding: 0 10px; border: 0; border-radius: 9px; background: transparent; color: var(--notch-muted); cursor: pointer; font-size: 11px; text-align: left; }
+  .mobile-menu-item { display: flex; width: 100%; min-height: 39px; align-items: center; justify-content: space-between; padding: 0 10px; border: 0; border-radius: 9px; background: transparent; color: var(--notch-muted); cursor: pointer; font-size: 11px; text-align: left; text-decoration: none; }
   .mobile-menu-item:hover { background: color-mix(in srgb, var(--notch-text) 8%, transparent); color: var(--notch-text); }
   .mobile-menu-item.is-active { color: var(--notch-text); }
   .mobile-menu-item-label { display: inline-flex; align-items: center; gap: 9px; }
