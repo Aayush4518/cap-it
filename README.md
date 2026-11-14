@@ -62,7 +62,7 @@ Then build and start the services:
 docker compose up --build -d
 ```
 
-Compose starts Redis, two API containers, Prometheus, and Grafana. Check their status with:
+Compose starts Redis, two API containers, Prometheus, Grafana, and the k6 load runner used by Playground. Check their status with:
 
 ```powershell
 docker compose ps
@@ -78,6 +78,7 @@ The Redis container has a health check. Both API instances wait for Redis to bec
 | API instance 2 | `http://localhost:3002` |
 | Prometheus | `http://localhost:9090` |
 | Grafana | `http://localhost:3001` |
+| Load runner | `http://localhost:3100` (local only) |
 
 The APIs both listen on port `3000` inside their containers. Compose maps the second API to host port `3002` so both instances can be reached from your computer.
 
@@ -157,6 +158,8 @@ docker compose --profile load run --rm k6 run /scripts/extreme_distributed.js
 ```
 
 This targets `api1:3000` and `api2:3000` directly, ramping through 100, 250, and 500 virtual users before holding at 500 briefly. The 500 VUs are split between the two APIs. The API health checks make Compose wait for both instances before starting the load test.
+
+The Playground **Fire test** buttons use a separate Compose-managed runner container. It starts with the API services, runs the same scripts inside Docker, and sends output back to the page. Start the web dashboard with `npm run dev --workspace=web`, enter the API key in Playground, then choose a profile. Single-instance tests use the selected API; the distributed test targets both. The runner port is published on `127.0.0.1` only, and the Vite development server also binds to loopback.
 
 If you run k6 directly on your computer instead, pass the same key as `.env` and the script uses the published host ports:
 

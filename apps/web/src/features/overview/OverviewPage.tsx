@@ -32,12 +32,10 @@ type TrendPoint = {
   averageStoreMs: number | null;
 };
 
-type SampleBaseline = {
-  total: number;
-  allowed: number;
-  rejected: number;
-  durationTotalMs: number;
-  storeCount: number;
+type OverviewAnalytics = {
+  range: string;
+  traffic: { at: number; allowedPerSecond: number; rejectedPerSecond: number }[];
+  storeLatency: { at: number; averageStoreMs: number | null }[];
 };
 
 type MetricIconName = "requests" | "allowed" | "rejected" | "rate" | "average" | "p95";
@@ -91,7 +89,7 @@ const initialInstances: InstanceView[] = instanceEndpoints.map((instance) => ({
   summary: null,
 }));
 
-const recentSamples: TrendPoint[] = [];
+const analyticsEndpoints = ["/api/api1/dashboard/analytics", "/api/api2/dashboard/analytics"];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -144,10 +142,6 @@ function aggregateP95(summaries: DashboardSummary[]) {
   return null;
 }
 
-function changeSince(current: number, previous: number) {
-  return current >= previous ? current - previous : current;
-}
-
 function formatCount(value: number) {
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(value);
 }
@@ -166,51 +160,74 @@ function formatAxisValue(value: number) {
   return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(value);
 }
 
-function sampleSeries(
-  current: InstanceView[],
-  previous: Map<string, SampleBaseline>,
-): { baseline: Map<string, SampleBaseline>; allowed: number; rejected: number; averageStoreMs: number | null } {
-  let allowed = 0;
-  let rejected = 0;
-  let durationDelta = 0;
-  let storeCountDelta = 0;
-  const baseline = new Map<string, SampleBaseline>();
+function isOverviewAnalytics(value: unknown, range: string): value is OverviewAnalytics {
+  return isRecord(value)
+    && value.range === range
+    && Array.isArray(value.traffic)
+    && value.traffic.every((point) => isRecord(point)
+      && isFiniteNumber(point.at)
+      && isFiniteNumber(point.allowedPerSecond)
+      && isFiniteNumber(point.rejectedPerSecond))
+    && Array.isArray(value.storeLatency)
+    && value.storeLatency.every((point) => isRecord(point)
+      && isFiniteNumber(point.at)
+      && (point.averageStoreMs === null || isFiniteNumber(point.averageStoreMs)));
+}
 
-  for (const instance of current) {
-    const summary = instance.summary;
-    if (!summary) continue;
-    const currentValues = {
-      total: summary.requests.total,
-      allowed: summary.requests.allowed,
-      rejected: summary.requests.rejected,
-      durationTotalMs: summary.store.durationTotalMs,
-      storeCount: summary.store.count,
-    };
-    const prior = previous.get(instance.key);
-    if (prior) {
-      allowed += changeSince(currentValues.allowed, prior.allowed);
-      rejected += changeSince(currentValues.rejected, prior.rejected);
-      durationDelta += changeSince(currentValues.durationTotalMs, prior.durationTotalMs);
-      storeCountDelta += changeSince(currentValues.storeCount, prior.storeCount);
+async function fetchTrend(range: string): Promise<TrendPoint[] | null> {
+  for (const endpoint of analyticsEndpoints) {
+    try {
+      const response = await fetch(`${endpoint}?range=${range}`, { cache: "no-store" });
+      const payload: unknown = await response.json();
+      if (!response.ok || !isOverviewAnalytics(payload, range)) continue;
+
+      const traffic = new Map(payload.traffic.map((point) => [point.at, point]));
+      const storeLatency = new Map(payload.storeLatency.map((point) => [point.at, point.averageStoreMs]));
+      const timestamps = [...new Set([...traffic.keys(), ...storeLatency.keys()])].sort((left, right) => left - right);
+      return timestamps.map((at) => {
+        const trafficPoint = traffic.get(at);
+        return {
+          at,
+          allowed: trafficPoint?.allowedPerSecond ?? 0,
+          rejected: trafficPoint?.rejectedPerSecond ?? 0,
+          averageStoreMs: storeLatency.get(at) ?? null,
+        };
+      });
+    } catch {
+      // Try the second API instance, which reads the same Prometheus history.
     }
-    baseline.set(instance.key, currentValues);
   }
-
-  return {
-    baseline,
-    allowed,
-    rejected,
-    averageStoreMs: storeCountDelta > 0 ? durationDelta / storeCountDelta : null,
-  };
+  return null;
 }
 
 function toLine(values: number[], width: number, height: number, maximum: number) {
   if (values.length < 2) return "";
-  return values.map((value, index) => {
-    const x = (index / (values.length - 1)) * width;
-    const y = height - (value / maximum) * height;
-    return `${index === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ");
+  const step = width / (values.length - 1);
+  const points = values.map((value, index) => ({
+    x: index * step,
+    y: height - (value / maximum) * height,
+  }));
+  const slopes = points.slice(0, -1).map((point, index) => points[index + 1]!.y - point.y);
+  const tangents = Array(points.length).fill(0) as number[];
+  tangents[0] = slopes[0]!;
+  tangents[tangents.length - 1] = slopes[slopes.length - 1]!;
+
+  for (let index = 1; index < points.length - 1; index += 1) {
+    const previous = slopes[index - 1]!;
+    const next = slopes[index]!;
+    // Zero the tangent at a peak or valley to keep the curve from overshooting samples.
+    tangents[index] = previous * next <= 0 ? 0 : (2 * previous * next) / (previous + next);
+  }
+
+  let path = `M${points[0]!.x.toFixed(1)},${points[0]!.y.toFixed(1)}`;
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const start = points[index]!;
+    const end = points[index + 1]!;
+    path += ` C${(start.x + step / 3).toFixed(1)},${(start.y + tangents[index]! / 3).toFixed(1)}`;
+    path += ` ${(end.x - step / 3).toFixed(1)},${(end.y - tangents[index + 1]! / 3).toFixed(1)}`;
+    path += ` ${end.x.toFixed(1)},${end.y.toFixed(1)}`;
+  }
+  return path;
 }
 
 function toArea(values: number[], width: number, height: number, maximum: number) {
@@ -223,7 +240,7 @@ function TrafficChart({ samples }: { samples: TrendPoint[] }) {
     return (
       <div className="chart-empty-state">
         <strong>{samples.length < 2 ? "Collecting request samples" : "No rate-limit decisions in this period"}</strong>
-        <p>Traffic is sampled every five seconds while this dashboard is open.</p>
+        <p>Traffic history comes from Prometheus and includes requests sent from other tabs.</p>
       </div>
     );
   }
@@ -320,52 +337,34 @@ function OverviewPage() {
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const [requestsPerSecond, setRequestsPerSecond] = useState<number | null>(null);
   const [selectedRange, setSelectedRange] = useState<(typeof timeRanges)[number]["label"]>("5m");
-  const [samples, setSamples] = useState<TrendPoint[]>(recentSamples);
-  const previous = useState(() => new Map<string, SampleBaseline>())[0];
-  const previousAt = useState(() => ({ value: 0 }))[0];
+  const [samples, setSamples] = useState<TrendPoint[]>([]);
 
   const refresh = useCallback(async () => {
     setIsRefreshing(true);
-    const results = await Promise.all(instanceEndpoints.map(async (endpoint, index): Promise<InstanceView> => {
-      try {
-        const response = await fetch(endpoint.endpoint, { cache: "no-store" });
-        if (!response.ok) return { ...initialInstances[index]!, state: "unavailable", summary: null };
-        const body: unknown = await response.json();
-        if (!isDashboardSummary(body)) return { ...initialInstances[index]!, state: "unavailable", summary: null };
-        return { key: endpoint.key, label: endpoint.label, port: endpoint.port, state: "online", summary: body };
-      } catch {
-        return { ...initialInstances[index]!, state: "offline", summary: null };
-      }
-    }));
+    const [results, trend] = await Promise.all([
+      Promise.all(instanceEndpoints.map(async (endpoint, index): Promise<InstanceView> => {
+        try {
+          const response = await fetch(endpoint.endpoint, { cache: "no-store" });
+          if (!response.ok) return { ...initialInstances[index]!, state: "unavailable", summary: null };
+          const body: unknown = await response.json();
+          if (!isDashboardSummary(body)) return { ...initialInstances[index]!, state: "unavailable", summary: null };
+          return { key: endpoint.key, label: endpoint.label, port: endpoint.port, state: "online", summary: body };
+        } catch {
+          return { ...initialInstances[index]!, state: "offline", summary: null };
+        }
+      })),
+      fetchTrend(selectedRange),
+    ]);
 
     const now = Date.now();
-    const complete = results.every((instance) => instance.summary !== null);
-    const deltas = sampleSeries(results, previous);
-    if (complete && previousAt.value > 0) {
-      const elapsedSeconds = Math.max(1, (now - previousAt.value) / 1000);
-      const rate = (deltas.allowed + deltas.rejected) / elapsedSeconds;
-      setRequestsPerSecond(rate);
-      const point: TrendPoint = {
-        at: now,
-        allowed: deltas.allowed,
-        rejected: deltas.rejected,
-        averageStoreMs: deltas.averageStoreMs,
-      };
-      recentSamples.push(point);
-      const cutoff = now - 24 * 60 * 60_000;
-      while (recentSamples.length > 0 && recentSamples[0]!.at < cutoff) recentSamples.shift();
-      setSamples([...recentSamples]);
-    } else if (!complete) {
-      setRequestsPerSecond(null);
-    }
-    previous.clear();
-    for (const [key, value] of deltas.baseline) previous.set(key, value);
-    previousAt.value = complete ? now : 0;
+    setSamples(trend ?? []);
+    const latestTrend = trend?.at(-1);
+    setRequestsPerSecond(latestTrend ? latestTrend.allowed + latestTrend.rejected : null);
 
     setInstances(results);
     setLastChecked(new Date(now));
     setIsRefreshing(false);
-  }, [previous, previousAt]);
+  }, [selectedRange]);
 
   useEffect(() => {
     void refresh();
@@ -447,7 +446,7 @@ function OverviewPage() {
           <div className="panel-heading">
             <div>
               <h2 id="traffic-title">Request traffic</h2>
-              <p>Rate-limit decisions per 5-second interval</p>
+              <p>Allowed and rejected requests per second</p>
             </div>
             <div className="range-picker" aria-label="Traffic chart time range">
               {timeRanges.map(({ label }) => (
@@ -462,7 +461,7 @@ function OverviewPage() {
           <div className="panel-heading">
             <div>
               <h2 id="latency-title">Store latency</h2>
-              <p>Recent rate-limit store operations</p>
+              <p>Recent average rate-limit store latency</p>
             </div>
             <span className="panel-period">Avg. {formatLatency(averageStoreMs)}</span>
           </div>

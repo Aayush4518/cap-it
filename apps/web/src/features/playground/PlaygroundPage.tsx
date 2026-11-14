@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 type HeaderRow = { id: string; name: string; value: string };
 type RequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -15,6 +15,17 @@ type RequestResult = {
   error: string | null;
   rateLimit: { limit: string | null; remaining: string | null; retryAfter: string | null; requestId: string | null };
 };
+type LoadJob = {
+  id: string;
+  profile: string;
+  status: "running" | "passed" | "failed";
+  stdout: string;
+  stderr: string;
+  exitCode: number | null;
+  startedAt: string;
+  finishedAt: string | null;
+};
+type LoadRunnerState = "checking" | "online" | "offline";
 
 const apiTargets: Record<ApiTarget, { label: string; base: string }> = {
   api1: { label: "API instance 1 · :3000", base: "/api/api1" },
@@ -22,6 +33,15 @@ const apiTargets: Record<ApiTarget, { label: string; base: string }> = {
 };
 const methods: RequestMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 const batchSizes = [1, 3, 5, 10];
+const loadProfiles = [
+  { file: "baseline.js", name: "Baseline", load: "2 VUs · 10 seconds", expected: "About 20 requests", description: "A small check that the API responds under light concurrent traffic." },
+  { file: "medium.js", name: "Medium", load: "50 VUs · 10 seconds", expected: "About 500 requests", description: "A moderate step up for observing normal concurrent rate-limit decisions." },
+  { file: "heavy.js", name: "Heavy", load: "100 VUs · 10 seconds", expected: "About 1,000 requests", description: "A heavier single-instance run; watch latency and connection errors." },
+  { file: "extreme.js", name: "Extreme", load: "500 VUs · 10 seconds", expected: "About 5,000 requests", description: "A short, high-concurrency run that may expose local connection limits." },
+  { file: "extreme_distributed.js", name: "Extreme distributed", load: "Up to 500 VUs · 45 seconds", expected: "About 12,000 requests", description: "Ramps across two API instances and sustains the peak before ramping down." },
+  { file: "stress.js", name: "Stress", load: "10–20 VUs · 40 seconds", expected: "About 450 requests", description: "Gradually increases and decreases traffic to observe behavior as load changes." },
+  { file: "burst.js", name: "Burst", load: "2–10 VUs · 10 seconds", expected: "About 60 requests", description: "Quickly spikes to 10 VUs, holds briefly, then ramps down." },
+] as const;
 
 function newRowId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -48,9 +68,52 @@ function PlaygroundPage() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [results, setResults] = useState<RequestResult[]>([]);
   const [bodyCopied, setBodyCopied] = useState(false);
+  const [copiedLoadProfile, setCopiedLoadProfile] = useState<string | null>(null);
+  const [loadCopyError, setLoadCopyError] = useState(false);
+  const [loadJob, setLoadJob] = useState<LoadJob | null>(null);
+  const [loadRunnerError, setLoadRunnerError] = useState<string | null>(null);
+  const [loadRunnerState, setLoadRunnerState] = useState<LoadRunnerState>("checking");
 
   const canHaveBody = method !== "GET";
   const latest = results[0];
+
+  useEffect(() => {
+    let cancelled = false;
+    const checkRunner = async () => {
+      try {
+        const response = await fetch("/load-runner/health", { cache: "no-store" });
+        if (!cancelled) setLoadRunnerState(response.ok ? "online" : "offline");
+      } catch {
+        if (!cancelled) setLoadRunnerState("offline");
+      }
+    };
+    void checkRunner();
+    const interval = window.setInterval(() => void checkRunner(), 5_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!loadJob || loadJob.status !== "running") return;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const response = await fetch(`/load-runner/jobs/${loadJob.id}`, { cache: "no-store" });
+        const payload = await response.json() as LoadJob | { error?: string };
+        if (!cancelled && response.ok && "id" in payload) setLoadJob(payload);
+        else if (!cancelled && !response.ok && "error" in payload) setLoadRunnerError(payload.error ?? "Could not read the k6 run status.");
+      } catch {
+        if (!cancelled) setLoadRunnerError("Lost contact with the local k6 runner. Check that it is still running.");
+      }
+    };
+    const interval = window.setInterval(() => void poll(), 800);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [loadJob?.id, loadJob?.status]);
 
   async function sendRequest(requestUrl: string, requestHeaders: Headers, requestBody: string | undefined) {
     const startedAt = performance.now();
@@ -138,6 +201,58 @@ function PlaygroundPage() {
       window.setTimeout(() => setBodyCopied(false), 1400);
     } catch {
       setValidationError("Clipboard access is unavailable in this browser.");
+    }
+  }
+
+  function getLoadCommand(file: string) {
+    const key = apiKey.trim() || "YOUR_API_KEY";
+    const targetArgs = file === "extreme_distributed.js"
+      ? "-e API1_URL=http://localhost:3000 -e API2_URL=http://localhost:3002"
+      : `-e API_URL=http://localhost:${target === "api1" ? "3000" : "3002"}`;
+    return `k6 run -e CAPIT_API_KEY=${key} ${targetArgs} tests/load/${file}`;
+  }
+
+  async function copyLoadCommand(file: string) {
+    try {
+      await navigator.clipboard.writeText(getLoadCommand(file));
+      setCopiedLoadProfile(file);
+      setLoadCopyError(false);
+      window.setTimeout(() => setCopiedLoadProfile(null), 1600);
+    } catch {
+      setLoadCopyError(true);
+    }
+  }
+
+  async function runLoadTest(file: string) {
+    if (!apiKey.trim()) {
+      setLoadRunnerError("Enter the API key above before starting a load test.");
+      return;
+    }
+    setLoadRunnerError(null);
+    setLoadJob(null);
+    try {
+      const response = await fetch("/load-runner/jobs", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ profile: file, apiKey: apiKey.trim(), target }),
+      });
+      const payload = await response.json() as LoadJob | { error?: string };
+      if (!response.ok || !("id" in payload)) {
+        setLoadRunnerError("error" in payload ? payload.error ?? "Could not start the k6 run." : "Could not start the k6 run.");
+        return;
+      }
+      setLoadJob(payload);
+    } catch {
+      setLoadRunnerError("Docker load runner is offline. Start the Compose stack with docker compose up -d --build.");
+    }
+  }
+
+  async function stopLoadTest() {
+    if (!loadJob || loadJob.status !== "running") return;
+    try {
+      await fetch(`/load-runner/jobs/${loadJob.id}/stop`, { method: "POST" });
+    } catch {
+      setLoadRunnerError("Could not reach the runner to stop this test.");
     }
   }
 
@@ -252,6 +367,30 @@ function PlaygroundPage() {
             ))}
           </div>
         )}
+      </section>
+
+      <section className="load-tests-section" aria-labelledby="load-tests-title">
+        <div className="panel-heading load-tests-heading">
+          <div><h2 id="load-tests-title">Load test profiles</h2><p>Run the existing k6 scenarios against one or both local API instances.</p></div>
+          <span className={`load-tests-runner load-runner-${loadRunnerState}`}><i aria-hidden="true" />{loadRunnerState === "checking" ? "Checking runner" : loadRunnerState === "online" ? "Runner online" : "Runner offline"}</span>
+        </div>
+        <p className="load-tests-note">Runs use the scripts in <code>tests/load</code>. Estimates assume roughly one request per VU per second; actual totals vary with response time. k6 runs inside Docker, and the API key is passed to the run without being saved.{loadRunnerState === "offline" && <> Start the Compose stack with <code>docker compose up -d --build</code>.</>}</p>
+        <div className="load-profile-grid">
+          {loadProfiles.map((profile) => (
+            <article className="load-profile" key={profile.file}>
+              <div className="load-profile-top"><h3>{profile.name}</h3><span>{profile.load}</span></div>
+              <p>{profile.description}</p>
+          <div className="load-profile-bottom"><span>{profile.expected}</span><div className="load-profile-actions"><button className="text-button" type="button" onClick={() => void copyLoadCommand(profile.file)}>{copiedLoadProfile === profile.file ? "Copied" : "Copy CLI"}</button><button className="load-fire-button" type="button" disabled={!apiKey.trim() || loadJob?.status === "running" || loadRunnerState !== "online"} onClick={() => void runLoadTest(profile.file)}>{loadJob?.status === "running" && loadJob.profile === profile.file ? "Running…" : "Fire test"}</button></div></div>
+            </article>
+          ))}
+        </div>
+        {loadCopyError && <p className="playground-validation" role="alert">Clipboard access is unavailable. Allow clipboard access to copy the k6 command.</p>}
+        {loadRunnerError && <p className="load-runner-error" role="alert">{loadRunnerError}</p>}
+        {!apiKey.trim() && <p className="load-tests-note load-key-note">Enter the API key above to enable a run. The copied CLI command will contain a placeholder until you do.</p>}
+        {loadJob && <div className={`load-run-output load-run-${loadJob.status}`} aria-live="polite">
+          <div className="load-run-heading"><div><strong>{loadJob.profile.replace(".js", "")} · {loadJob.status === "running" ? "Running" : loadJob.status === "passed" ? "Passed" : "Finished with errors"}</strong><span>Started {new Date(loadJob.startedAt).toLocaleTimeString()}</span></div>{loadJob.status === "running" ? <button className="text-button" type="button" onClick={() => void stopLoadTest()}>Stop test</button> : <span className="load-run-exit">Exit code {loadJob.exitCode ?? "—"}</span>}</div>
+          <pre aria-label="k6 output">{[loadJob.stdout, loadJob.stderr].filter(Boolean).join("\n") || "Starting k6…"}</pre>
+        </div>}
       </section>
     </div>
   );

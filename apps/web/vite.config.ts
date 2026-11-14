@@ -15,6 +15,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/api2/, ""),
       },
+      "/load-runner": {
+        target: process.env.LOAD_RUNNER_TARGET ?? "http://127.0.0.1:3100",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/load-runner/, ""),
+      },
     },
   },
 });

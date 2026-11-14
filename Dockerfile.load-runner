@@ -1,0 +1,17 @@
+FROM grafana/k6:latest AS k6
+
+FROM node:22-alpine
+
+WORKDIR /app
+
+COPY --from=k6 /usr/bin/k6 /usr/local/bin/k6
+COPY --chown=node:node tools/load-runner.mjs ./tools/load-runner.mjs
+COPY --chown=node:node tests/load ./tests/load
+
+ENV LOAD_RUNNER_HOST=0.0.0.0
+ENV LOAD_RUNNER_PORT=3100
+
+EXPOSE 3100
+USER node
+
+CMD ["node", "tools/load-runner.mjs"]
