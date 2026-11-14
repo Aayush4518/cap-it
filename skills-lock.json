@@ -6,6 +6,36 @@
       "sourceType": "github",
       "skillPath": "skills/apple-design/SKILL.md",
       "computedHash": "f3f1d2cbc8f3e79ccddff05f4e42d34d995f057fb30ff670e4edf8c87d568b69"
+    },
+    "creative-coding": {
+      "source": "gustavosilveira23/claude-design-skills",
+      "sourceType": "github",
+      "skillPath": "skills/creative-coding/SKILL.md",
+      "computedHash": "3d42e129d653dc015d6ce4b3ee405998dfcb1d43ed8fb161e52f0932fc24086e"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "106acf230014cbb43ca34e6410371321b56ca742f9ee0442e8ec05bf02eb0384"
+    },
+    "motion-web": {
+      "source": "feitangyuan/motion-web",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "005220c288021c82328e7fd258284da30aa36b56d453e9910713a60514113e61"
+    },
+    "threejs-animation": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-animation/SKILL.md",
+      "computedHash": "cb27ed7b9ef4eb1f1f45a616b776f1f3390edd9ea17f9ddbde26b4f621f2d2ae"
+    },
+    "threejs-fundamentals": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-fundamentals/SKILL.md",
+      "computedHash": "01b18e381a820a257d2a2ecdaedac3ec36e8f2cac87810e8cc1b42800e3d2bb3"
     }
   }
 }

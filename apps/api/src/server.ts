@@ -35,6 +35,7 @@ async function startServer() {
         {
             instanceId: process.env.INSTANCE_ID ?? `api-${port}`,
             getStoreConnectionStatus: () => redis.isReady ? "connected" : "disconnected",
+            prometheusUrl: process.env.PROMETHEUS_URL ?? "http://localhost:9090",
         },
     );
 

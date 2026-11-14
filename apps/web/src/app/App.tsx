@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import OverviewPage from "../features/overview/OverviewPage";
 import PlaygroundPage from "../features/playground/PlaygroundPage";
 import PoliciesPage from "../features/policies/PoliciesPage";
+import AnalyticsPage from "../features/analytics/AnalyticsPage";
+import InstancesPage from "../features/instances/InstancesPage";
 import { NotchNav } from "../components/NotchNav";
 
 const sections = [
@@ -117,6 +119,10 @@ function App() {
             <PlaygroundPage />
           ) : activeSection === "policies" ? (
             <PoliciesPage />
+          ) : activeSection === "analytics" ? (
+            <AnalyticsPage />
+          ) : activeSection === "instances" ? (
+            <InstancesPage />
           ) : (
             <section className="page-placeholder" aria-labelledby="placeholder-title">
               <span className="section-kicker">CAP-IT / {activeLabel?.toUpperCase()}</span>

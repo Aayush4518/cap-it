@@ -19,6 +19,18 @@ export const rateLimitStoreErrors = new Counter({
   labelNames: ["policy"] as const,
 })
 
+export const httpRequests = new Counter({
+  name: "capit_http_requests_total",
+  help: "Completed application HTTP requests, grouped by method and status code.",
+  labelNames: ["method", "status"] as const,
+})
+
+export const httpRequestDuration = new Histogram({
+  name: "capit_http_request_duration_seconds",
+  help: "Duration of application HTTP requests in seconds.",
+  labelNames: ["method", "status"] as const,
+})
+
 type MetricSample = {
   value: number;
   labels: Record<string, string | number>;

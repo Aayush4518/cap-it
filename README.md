@@ -44,6 +44,7 @@ Each API request passes through API-key authentication and rate-limit middleware
 - API-key authentication and a request ID on each response.
 - Fail-closed behavior if the rate-limit store is unavailable.
 - Prometheus counters and a histogram for rate-limit decisions and store operations.
+- Dashboard pages for overview, policy configuration, analytics, and API instance health.
 - Grafana for exploring the collected metrics.
 - Unit, integration, and k6 load-test examples.
 
@@ -99,6 +100,8 @@ The demo policy has a bucket capacity of 3 tokens and refills at 1 token per sec
 
 The API also exposes Prometheus metrics at `/metrics`. You can inspect them directly at `http://localhost:3000/metrics` or in Prometheus. Prometheus is configured to scrape `api1:3000` and `api2:3000` over the Compose network. In Grafana, the Prometheus data source URL should be `http://prometheus:9090`.
 
+The web dashboard reads structured data from `/dashboard/overview` and `/dashboard/analytics?range=5m`. Analytics supports `5m`, `15m`, `1h`, and `24h` ranges and requires the Prometheus service to be running. The API queries Prometheus and returns chart-ready data; the browser does not call the Prometheus query API directly.
+
 ### Metrics
 
 | Metric | Type | What it measures |
@@ -106,6 +109,8 @@ The API also exposes Prometheus metrics at `/metrics`. You can inspect them dire
 | `capit_rate_limit_decisions_total` | Counter | Allowed and rejected decisions, labeled by policy and outcome. |
 | `capit_rate_limit_store_duration_seconds` | Histogram | Time spent on rate-limit store operations. |
 | `capit_rate_limit_store_errors_total` | Counter | Rate-limit store operation failures, labeled by policy. |
+| `capit_http_requests_total` | Counter | Application response counts grouped by method and status code; health, metrics, and dashboard endpoints are excluded. |
+| `capit_http_request_duration_seconds` | Histogram | Application response latency grouped by method and status code; health, metrics, and dashboard endpoints are excluded. |
 
 ## Run the tests
 
