@@ -61,7 +61,7 @@ function startJob(profile, apiKey, target) {
   jobs.set(id, job);
   activeJobId = id;
 
-  const process = spawn("k6", ["run", resolve(scriptDirectory, profile)], {
+  const childProcess = spawn("k6", ["run", resolve(scriptDirectory, profile)], {
     cwd: projectRoot,
     shell: false,
     windowsHide: true,
@@ -74,24 +74,24 @@ function startJob(profile, apiKey, target) {
     },
   });
 
-  process.stdout.setEncoding("utf8");
-  process.stderr.setEncoding("utf8");
-  process.stdout.on("data", (chunk) => { job.stdout = (job.stdout + chunk).slice(-120_000); });
-  process.stderr.on("data", (chunk) => { job.stderr = (job.stderr + chunk).slice(-30_000); });
-  process.on("error", (error) => {
+  childProcess.stdout.setEncoding("utf8");
+  childProcess.stderr.setEncoding("utf8");
+  childProcess.stdout.on("data", (chunk) => { job.stdout = (job.stdout + chunk).slice(-120_000); });
+  childProcess.stderr.on("data", (chunk) => { job.stderr = (job.stderr + chunk).slice(-30_000); });
+  childProcess.on("error", (error) => {
     job.status = "failed";
     job.stderr += `${job.stderr ? "\n" : ""}${error.message}`;
     job.finishedAt = new Date().toISOString();
     activeJobId = null;
   });
-  process.on("close", (code) => {
+  childProcess.on("close", (code) => {
     if (job.status === "running") job.status = code === 0 ? "passed" : "failed";
     job.exitCode = code;
     job.finishedAt = new Date().toISOString();
     activeJobId = null;
   });
 
-  job.process = process;
+  job.process = childProcess;
   return job;
 }
 
