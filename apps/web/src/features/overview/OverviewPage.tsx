@@ -40,6 +40,37 @@ type SampleBaseline = {
   storeCount: number;
 };
 
+type MetricIconName = "requests" | "allowed" | "rejected" | "rate" | "average" | "p95";
+
+function MetricIcon({ name }: { name: MetricIconName }) {
+  const common = {
+    width: 19,
+    height: 19,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.6,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true as const,
+  };
+
+  switch (name) {
+    case "requests":
+      return <svg {...common}><path d="m12 3 8 4-8 4-8-4 8-4Z" /><path d="m4 12 8 4 8-4M4 17l8 4 8-4" /></svg>;
+    case "allowed":
+      return <svg {...common}><circle cx="12" cy="12" r="9" /><path d="m8 12 2.5 2.5L16.5 9" /></svg>;
+    case "rejected":
+      return <svg {...common}><circle cx="12" cy="12" r="9" /><path d="m9 9 6 6m0-6-6 6" /></svg>;
+    case "rate":
+      return <svg {...common}><path d="M3 12h4l2.5-6 4.5 12 2.5-6H21" /></svg>;
+    case "average":
+      return <svg {...common}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>;
+    case "p95":
+      return <svg {...common}><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" /></svg>;
+  }
+}
+
 const instanceEndpoints = [
   { key: "api1", label: "API instance 1", port: ":3000", endpoint: "/api/api1/dashboard/overview" },
   { key: "api2", label: "API instance 2", port: ":3002", endpoint: "/api/api2/dashboard/overview" },
@@ -131,6 +162,10 @@ function formatLatency(value: number | null) {
   return `${value.toFixed(1)} ms`;
 }
 
+function formatAxisValue(value: number) {
+  return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(value);
+}
+
 function sampleSeries(
   current: InstanceView[],
   previous: Map<string, SampleBaseline>,
@@ -178,6 +213,11 @@ function toLine(values: number[], width: number, height: number, maximum: number
   }).join(" ");
 }
 
+function toArea(values: number[], width: number, height: number, maximum: number) {
+  const line = toLine(values, width, height, maximum);
+  return line ? `${line} L${width},${height} L0,${height} Z` : "";
+}
+
 function TrafficChart({ samples }: { samples: TrendPoint[] }) {
   if (samples.length < 2 || samples.every((sample) => sample.allowed + sample.rejected === 0)) {
     return (
@@ -201,11 +241,26 @@ function TrafficChart({ samples }: { samples: TrendPoint[] }) {
     <div className="traffic-chart">
       <div className="chart-legend"><span><i className="legend-allowed" />Allowed</span><span><i className="legend-rejected" />Rejected</span></div>
       <svg viewBox="0 0 700 158" preserveAspectRatio="none" role="img" aria-label="Allowed and rejected rate-limit decisions over time">
+        <defs>
+          <linearGradient id="traffic-allowed-gradient" x1="0" y1="0" x2="0" y2="1">
+            <stop className="area-stop-green" offset="0%" stopOpacity="0.25" />
+            <stop className="area-stop-green" offset="100%" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="traffic-rejected-gradient" x1="0" y1="0" x2="0" y2="1">
+            <stop className="area-stop-rejected" offset="0%" stopOpacity="0.24" />
+            <stop className="area-stop-rejected" offset="100%" stopOpacity="0" />
+          </linearGradient>
+        </defs>
         {[0, 1, 2, 3].map((line) => {
-          const y = 12 + line * 39;
-          return <line className="chart-gridline" key={line} x1="42" x2="690" y1={y} y2={y} />;
+          const y = 14 + line * (118 / 3);
+          return <g key={line}>
+            <line className="chart-gridline" x1="42" x2="690" y1={y} y2={y} />
+            <text className="chart-axis-label" x="36" y={y + 3} textAnchor="end" aria-hidden="true">{formatAxisValue(maximum * (1 - line / 3))}</text>
+          </g>;
         })}
         <g transform="translate(46 14)">
+          <path className="traffic-area" d={toArea(plotSamples.map((sample) => sample.allowed), 640, 118, maximum)} fill="url(#traffic-allowed-gradient)" />
+          <path className="traffic-area" d={toArea(plotSamples.map((sample) => sample.rejected), 640, 118, maximum)} fill="url(#traffic-rejected-gradient)" />
           <path className="traffic-line traffic-line-allowed" d={allowedPath} />
           <path className="traffic-line traffic-line-rejected" d={rejectedPath} />
         </g>
@@ -235,9 +290,24 @@ function LatencyChart({ samples }: { samples: TrendPoint[] }) {
 
   return (
     <div className="latency-chart">
-      <svg viewBox="0 0 280 118" preserveAspectRatio="none" role="img" aria-label="Average rate-limit store latency over time">
-        {[0, 1, 2].map((line) => <line className="chart-gridline" key={line} x1="0" x2="280" y1={8 + line * 48} y2={8 + line * 48} />)}
-        <g transform="translate(8 9)"><path className="traffic-line traffic-line-latency" d={path} /></g>
+      <svg viewBox="0 0 320 118" preserveAspectRatio="none" role="img" aria-label="Average rate-limit store latency over time">
+        <defs>
+          <linearGradient id="latency-gradient" x1="0" y1="0" x2="0" y2="1">
+            <stop className="area-stop-green" offset="0%" stopOpacity="0.24" />
+            <stop className="area-stop-green" offset="100%" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {[0, 1, 2].map((line) => {
+          const y = 9 + line * 50;
+          return <g key={line}>
+            <line className="chart-gridline" x1="45" x2="312" y1={y} y2={y} />
+            <text className="chart-axis-label" x="39" y={y + 3} textAnchor="end" aria-hidden="true">{line === 2 ? "0" : formatLatency(maximum * (1 - line / 2))}</text>
+          </g>;
+        })}
+        <g transform="translate(48 9)">
+          <path className="latency-area" d={toArea(values, 260, 100, maximum)} fill="url(#latency-gradient)" />
+          <path className="traffic-line traffic-line-latency" d={path} />
+        </g>
       </svg>
       <div className="chart-time-labels"><span>{new Date(plotSamples[0]!.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span><span>Now</span></div>
     </div>
@@ -325,38 +395,46 @@ function OverviewPage() {
         ? "connected"
         : "unknown";
   const redisLabel = redisStatus === "connected" ? "Connected" : redisStatus === "disconnected" ? "Disconnected" : "Unknown";
+  const liveLabel = allInstancesOnline
+    ? redisStatus === "connected" ? "Live" : redisStatus === "disconnected" ? "Store offline" : "Checking"
+    : summaries.length === 0 ? "Offline" : "Partial";
+  const liveTone = liveLabel === "Live" ? "live" : liveLabel === "Offline" ? "offline" : "degraded";
   const metricNote = summaries.length === 0
     ? "Waiting for API data"
     : allInstancesOnline
       ? "Since API processes started"
       : `Partial data · ${summaries.length} of ${instanceEndpoints.length} instances reporting`;
 
-  const metricCards = [
-    { label: "Total requests", value: summaries.length ? formatCount(totalRequests) : "—", tone: "neutral" },
-    { label: "Allowed", value: summaries.length ? formatCount(allowed) : "—", tone: "green" },
-    { label: "Rejected", value: summaries.length ? formatCount(rejected) : "—", tone: "orange" },
-    { label: "Requests / sec", value: formatRate(requestsPerSecond), tone: "neutral" },
-    { label: "Avg. store latency", value: formatLatency(averageStoreMs), tone: "neutral" },
-    { label: "p95 store latency", value: formatLatency(p95StoreMs), tone: "neutral" },
+  const metricCards: { label: string; value: string; tone: "neutral" | "green" | "orange"; icon: MetricIconName }[] = [
+    { label: "Total requests", value: summaries.length ? formatCount(totalRequests) : "—", tone: "neutral", icon: "requests" },
+    { label: "Allowed", value: summaries.length ? formatCount(allowed) : "—", tone: "green", icon: "allowed" },
+    { label: "Rejected", value: summaries.length ? formatCount(rejected) : "—", tone: "orange", icon: "rejected" },
+    { label: "Requests / sec", value: formatRate(requestsPerSecond), tone: "neutral", icon: "rate" },
+    { label: "Avg. store latency", value: formatLatency(averageStoreMs), tone: "neutral", icon: "average" },
+    { label: "p95 store latency", value: formatLatency(p95StoreMs), tone: "neutral", icon: "p95" },
   ];
 
   return (
-    <div className="overview-page">
+    <div className="overview-page overview-dashboard">
       <div className="page-heading">
         <div>
-          <span className="section-kicker">SYSTEM STATUS</span>
+          <span className="overview-eyebrow">System status</span>
           <h1>Overview</h1>
           <p className="page-subtitle">A live view of the rate limiter and its connected services.</p>
         </div>
-        <button className="button-secondary refresh-button" type="button" onClick={() => void refresh()} disabled={isRefreshing}>
-          <span className={isRefreshing ? "refresh-icon is-spinning" : "refresh-icon"} aria-hidden="true">↻</span>
-          {isRefreshing ? "Checking…" : "Refresh"}
-        </button>
+        <div className="overview-heading-actions">
+          <span className={`live-indicator live-indicator-${liveTone}`}><i />{liveLabel}</span>
+          <button className="button-secondary refresh-button" type="button" onClick={() => void refresh()} disabled={isRefreshing}>
+            <span className={isRefreshing ? "refresh-icon is-spinning" : "refresh-icon"} aria-hidden="true">↻</span>
+            {isRefreshing ? "Checking…" : "Refresh"}
+          </button>
+        </div>
       </div>
 
       <section className="metric-grid" aria-label="Rate-limit metrics">
-        {metricCards.map(({ label, value, tone }) => (
-          <article className="metric-panel" key={label}>
+        {metricCards.map(({ label, value, tone, icon }) => (
+          <article className={`metric-panel metric-panel-${tone}`} key={label}>
+            <MetricIcon name={icon} />
             <div className="metric-label">{label}</div>
             <div className={`metric-value tone-${tone}`}>{value}</div>
           </article>

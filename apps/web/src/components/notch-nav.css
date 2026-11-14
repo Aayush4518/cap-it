@@ -19,7 +19,7 @@
   --notch-bg: #242723;
   --notch-text: #f0f0e9;
   --notch-muted: #a5aa9f;
-  --notch-active: #393e37;
+  --notch-active: rgba(73, 230, 6, 0.2);
   --notch-menu: #2c302b;
 }
 
