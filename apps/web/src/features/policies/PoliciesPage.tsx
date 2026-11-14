@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { apiAddress, apiUrl } from "../../shared/api";
 
 type Policy = { id: string; capacity: number; refillRatePerSecond: number };
 type PolicyReport = {
@@ -10,8 +11,8 @@ type PolicyReport = {
 };
 
 const sources = [
-  { instanceId: "api1", label: "API instance 1", port: ":3000", endpoint: "/api/api1/dashboard/overview" },
-  { instanceId: "api2", label: "API instance 2", port: ":3002", endpoint: "/api/api2/dashboard/overview" },
+  { instanceId: "api1", label: "API instance 1", port: apiAddress("api1"), endpoint: apiUrl("api1", "/dashboard/overview") },
+  { instanceId: "api2", label: "API instance 2", port: apiAddress("api2"), endpoint: apiUrl("api2", "/dashboard/overview") },
 ] as const;
 
 const initialReports: PolicyReport[] = sources.map(({ instanceId, label, port }) => ({

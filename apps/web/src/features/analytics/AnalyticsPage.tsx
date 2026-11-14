@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { apiUrl } from "../../shared/api";
 
 type Range = "5m" | "15m" | "1h" | "24h";
 type TrafficPoint = { at: number; allowedPerSecond: number; rejectedPerSecond: number };
@@ -7,7 +8,7 @@ type StoreLatencyPoint = { at: number; averageStoreMs: number | null; p95StoreMs
 type Analytics = { range: Range; capturedAt: string; traffic: TrafficPoint[]; requestLatency: RequestLatencyPoint[]; storeLatency: StoreLatencyPoint[]; httpStatuses: { status: number; requests: number }[] };
 
 const ranges: Range[] = ["5m", "15m", "1h", "24h"];
-const analyticsEndpoints = ["/api/api1/dashboard/analytics", "/api/api2/dashboard/analytics"];
+const analyticsEndpoints = [apiUrl("api1", "/dashboard/analytics"), apiUrl("api2", "/dashboard/analytics")];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;

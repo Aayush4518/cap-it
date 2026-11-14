@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { apiAddress, apiBaseUrl, apiLoadTestUrl, apiUrl, type ApiInstanceKey } from "../../shared/api";
 
 type HeaderRow = { id: string; name: string; value: string };
 type RequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-type ApiTarget = "api1" | "api2";
+type ApiTarget = ApiInstanceKey;
 type RequestResult = {
   id: string;
   method: RequestMethod;
@@ -28,8 +29,8 @@ type LoadJob = {
 type LoadRunnerState = "checking" | "online" | "offline";
 
 const apiTargets: Record<ApiTarget, { label: string; base: string }> = {
-  api1: { label: "API instance 1 · :3000", base: "/api/api1" },
-  api2: { label: "API instance 2 · :3002", base: "/api/api2" },
+  api1: { label: `API instance 1 · ${apiAddress("api1")}`, base: apiBaseUrl("api1") },
+  api2: { label: `API instance 2 · ${apiAddress("api2")}`, base: apiBaseUrl("api2") },
 };
 const methods: RequestMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 const batchSizes = [1, 3, 5, 10];
@@ -72,12 +73,13 @@ function PlaygroundPage() {
   const [loadCopyError, setLoadCopyError] = useState(false);
   const [loadJob, setLoadJob] = useState<LoadJob | null>(null);
   const [loadRunnerError, setLoadRunnerError] = useState<string | null>(null);
-  const [loadRunnerState, setLoadRunnerState] = useState<LoadRunnerState>("checking");
+  const [loadRunnerState, setLoadRunnerState] = useState<LoadRunnerState>(import.meta.env.DEV ? "checking" : "offline");
 
   const canHaveBody = method !== "GET";
   const latest = results[0];
 
   useEffect(() => {
+    if (!import.meta.env.DEV) return;
     let cancelled = false;
     const checkRunner = async () => {
       try {
@@ -180,7 +182,7 @@ function PlaygroundPage() {
       return;
     }
 
-    const requestUrl = `${apiTargets[target].base}${trimmedPath}`;
+    const requestUrl = apiUrl(target, trimmedPath);
     setIsSending(true);
     const batchResults = await Promise.all(
       Array.from({ length: batchSize }, () => sendRequest(requestUrl, requestHeaders, requestBody)),
@@ -206,9 +208,11 @@ function PlaygroundPage() {
 
   function getLoadCommand(file: string) {
     const key = apiKey.trim() || "YOUR_API_KEY";
+    const api1Url = apiLoadTestUrl("api1") ?? "http://localhost:3000";
+    const api2Url = apiLoadTestUrl("api2") ?? "http://localhost:3002";
     const targetArgs = file === "extreme_distributed.js"
-      ? "-e API1_URL=http://localhost:3000 -e API2_URL=http://localhost:3002"
-      : `-e API_URL=http://localhost:${target === "api1" ? "3000" : "3002"}`;
+      ? `-e API1_URL=${api1Url} -e API2_URL=${api2Url}`
+      : `-e API_URL=${target === "api1" ? api1Url : api2Url}`;
     return `k6 run -e CAPIT_API_KEY=${key} ${targetArgs} tests/load/${file}`;
   }
 
@@ -224,6 +228,7 @@ function PlaygroundPage() {
   }
 
   async function runLoadTest(file: string) {
+    if (!import.meta.env.DEV) return;
     if (!apiKey.trim()) {
       setLoadRunnerError("Enter the API key above before starting a load test.");
       return;
@@ -372,15 +377,15 @@ function PlaygroundPage() {
       <section className="load-tests-section" aria-labelledby="load-tests-title">
         <div className="panel-heading load-tests-heading">
           <div><h2 id="load-tests-title">Load test profiles</h2><p>Run the existing k6 scenarios against one or both local API instances.</p></div>
-          <span className={`load-tests-runner load-runner-${loadRunnerState}`}><i aria-hidden="true" />{loadRunnerState === "checking" ? "Checking runner" : loadRunnerState === "online" ? "Runner online" : "Runner offline"}</span>
+          <span className={`load-tests-runner load-runner-${loadRunnerState}`}><i aria-hidden="true" />{!import.meta.env.DEV ? "Local runner only" : loadRunnerState === "checking" ? "Checking runner" : loadRunnerState === "online" ? "Runner online" : "Runner offline"}</span>
         </div>
-        <p className="load-tests-note">Runs use the scripts in <code>tests/load</code>. Estimates assume roughly one request per VU per second; actual totals vary with response time. k6 runs inside Docker, and the API key is passed to the run without being saved.{loadRunnerState === "offline" && <> Start the Compose stack with <code>docker compose up -d --build</code>.</>}</p>
+        <p className="load-tests-note">Runs use the scripts in <code>tests/load</code>. Estimates assume roughly one request per VU per second; actual totals vary with response time. k6 runs inside Docker, and the API key is passed to the run without being saved.{!import.meta.env.DEV ? <> Hosted dashboards do not connect to the local load runner. Run the copied command from your own machine.</> : loadRunnerState === "offline" && <> Start the Compose stack with <code>docker compose up -d --build</code>.</>}</p>
         <div className="load-profile-grid">
           {loadProfiles.map((profile) => (
             <article className="load-profile" key={profile.file}>
               <div className="load-profile-top"><h3>{profile.name}</h3><span>{profile.load}</span></div>
               <p>{profile.description}</p>
-          <div className="load-profile-bottom"><span>{profile.expected}</span><div className="load-profile-actions"><button className="text-button" type="button" onClick={() => void copyLoadCommand(profile.file)}>{copiedLoadProfile === profile.file ? "Copied" : "Copy CLI"}</button><button className="load-fire-button" type="button" disabled={!apiKey.trim() || loadJob?.status === "running" || loadRunnerState !== "online"} onClick={() => void runLoadTest(profile.file)}>{loadJob?.status === "running" && loadJob.profile === profile.file ? "Running…" : "Fire test"}</button></div></div>
+          <div className="load-profile-bottom"><span>{profile.expected}</span><div className="load-profile-actions"><button className="text-button" type="button" onClick={() => void copyLoadCommand(profile.file)}>{copiedLoadProfile === profile.file ? "Copied" : "Copy CLI"}</button><button className="load-fire-button" type="button" disabled={!import.meta.env.DEV || !apiKey.trim() || loadJob?.status === "running" || loadRunnerState !== "online"} onClick={() => void runLoadTest(profile.file)}>{loadJob?.status === "running" && loadJob.profile === profile.file ? "Running…" : "Fire test"}</button></div></div>
             </article>
           ))}
         </div>

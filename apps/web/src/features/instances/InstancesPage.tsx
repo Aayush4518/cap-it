@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { apiAddress, apiUrl } from "../../shared/api";
 
 type RedisStatus = "connected" | "disconnected" | "unknown";
 type DashboardSummary = {
@@ -20,8 +21,8 @@ type Instance = {
 };
 
 const endpoints = [
-  { key: "api1", label: "API instance 1", port: ":3000", healthEndpoint: "/api/api1/health", dashboardEndpoint: "/api/api1/dashboard/overview" },
-  { key: "api2", label: "API instance 2", port: ":3002", healthEndpoint: "/api/api2/health", dashboardEndpoint: "/api/api2/dashboard/overview" },
+  { key: "api1", label: "API instance 1", port: apiAddress("api1"), healthEndpoint: apiUrl("api1", "/health"), dashboardEndpoint: apiUrl("api1", "/dashboard/overview") },
+  { key: "api2", label: "API instance 2", port: apiAddress("api2"), healthEndpoint: apiUrl("api2", "/health"), dashboardEndpoint: apiUrl("api2", "/dashboard/overview") },
 ] as const;
 
 const initialInstances: Instance[] = endpoints.map((endpoint) => ({

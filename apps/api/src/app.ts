@@ -1,4 +1,7 @@
 import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import { timingSafeEqual } from "node:crypto";
 import { healthRouter } from "./routes/health.routes";
 import { demoRouter } from "./routes/demo.route";
 import { requireApiKey } from "./middleware/api-key.middleware";
@@ -21,6 +24,15 @@ interface DashboardOptions {
     instanceId?: string;
     getStoreConnectionStatus?: () => StoreConnectionStatus;
     prometheusUrl?: string;
+    frontendOrigins?: readonly string[];
+    metricsBearerToken?: string;
+}
+
+function matchesBearerToken(header: string | undefined, expectedToken: string): boolean {
+    if (!header?.startsWith("Bearer ")) return false;
+    const actual = Buffer.from(header.slice("Bearer ".length));
+    const expected = Buffer.from(expectedToken);
+    return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
 export function createApp(
@@ -28,9 +40,36 @@ export function createApp(
     store: RateLimitStore = new InMemoryRateLimitStore(),
     dashboardOptions: DashboardOptions = {},
 ) {
-    const app= express()
+    const app = express();
+    const envOrigins = process.env.FRONTEND_ORIGINS?.split(",").map((origin) => origin.trim()).filter(Boolean) ?? [];
+    const configuredOrigins = dashboardOptions.frontendOrigins
+        ?? (envOrigins.length > 0 ? envOrigins
+            : process.env.NODE_ENV === "production" ? []
+                : ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:4173", "http://127.0.0.1:4173"]);
+    const allowedOrigins = new Set(configuredOrigins);
 
-    app.use(requestIdMiddleware)
+    app.disable("x-powered-by");
+    app.use(requestIdMiddleware);
+    app.use(helmet());
+    app.use(cors({
+        origin(origin, callback) {
+            if (!origin) {
+                callback(null, false);
+                return;
+            }
+            if (allowedOrigins.has(origin)) {
+                callback(null, true);
+                return;
+            }
+            callback(Object.assign(new Error("Origin is not allowed by CORS."), { code: "cors_origin_not_allowed" }));
+        },
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        // The cors package reflects requested headers only for an allowed origin,
+        // which supports the Playground's user-defined headers without a wildcard.
+        exposedHeaders: ["RateLimit-Limit", "RateLimit-Remaining", "Retry-After", "X-Request-Id"],
+        credentials: false,
+        optionsSuccessStatus: 204,
+    }));
 
     app.use((req, res, next) => {
         const isOperationalRequest = req.path !== "/metrics"
@@ -49,12 +88,21 @@ export function createApp(
         next();
     });
 
-    app.use(express.json())
+    app.use(express.json({ limit: "32kb" }));
     app.use("/health", healthRouter, requestIdMiddleware)
     app.use("/demo", requireApiKey(apiKeys), createRateLimitMiddleware(store, defaultPolicy) , demoRouter)
-    app.get("/metrics", async(_req, res)=>{
-        res.set("Content-Type", register.contentType)
-        res.send(await register.metrics())
+    app.get("/metrics", async (req, res, next) => {
+        const expectedToken = dashboardOptions.metricsBearerToken ?? process.env.METRICS_BEARER_TOKEN;
+        if (expectedToken && !matchesBearerToken(req.get("authorization"), expectedToken)) {
+            res.status(401).json({ error: "unauthorized" });
+            return;
+        }
+        try {
+            res.set("Content-Type", register.contentType);
+            res.send(await register.metrics());
+        } catch (error) {
+            next(error);
+        }
     })
     app.get("/dashboard/overview", async (_req, res) => {
         const metrics = await getDashboardMetrics(defaultPolicy.id);
@@ -85,7 +133,7 @@ export function createApp(
             res.status(503).json({ error: "analytics_unavailable", message: "Prometheus metrics are temporarily unavailable." });
         }
     });
-    app.use(errorMiddleware)
+    app.use(errorMiddleware);
 
     return app
 }

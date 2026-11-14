@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { apiAddress, apiUrl } from "../../shared/api";
 
 type RedisStatus = "connected" | "disconnected" | "unknown";
 type DashboardSummary = {
@@ -70,8 +71,8 @@ function MetricIcon({ name }: { name: MetricIconName }) {
 }
 
 const instanceEndpoints = [
-  { key: "api1", label: "API instance 1", port: ":3000", endpoint: "/api/api1/dashboard/overview" },
-  { key: "api2", label: "API instance 2", port: ":3002", endpoint: "/api/api2/dashboard/overview" },
+  { key: "api1", label: "API instance 1", port: apiAddress("api1"), endpoint: apiUrl("api1", "/dashboard/overview") },
+  { key: "api2", label: "API instance 2", port: apiAddress("api2"), endpoint: apiUrl("api2", "/dashboard/overview") },
 ] as const;
 
 const timeRanges = [
@@ -89,7 +90,7 @@ const initialInstances: InstanceView[] = instanceEndpoints.map((instance) => ({
   summary: null,
 }));
 
-const analyticsEndpoints = ["/api/api1/dashboard/analytics", "/api/api2/dashboard/analytics"];
+const analyticsEndpoints = [apiUrl("api1", "/dashboard/analytics"), apiUrl("api2", "/dashboard/analytics")];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;

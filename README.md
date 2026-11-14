@@ -4,6 +4,8 @@ Cap-It is a learning project for building a distributed rate limiter. It uses a 
 
 The project also includes Prometheus metrics, a Grafana dashboard, and k6 load-test scripts. The goal is to understand how the pieces fit together, from a single request through a shared rate-limit decision to monitoring the result.
 
+For the Vercel + Render environment variables and deployment setup, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## How it works
 
 ```mermaid
@@ -99,7 +101,7 @@ curl.exe -i -H "x-api-key: test-key" http://localhost:3000/demo
 
 The demo policy has a bucket capacity of 3 tokens and refills at 1 token per second. Try alternating requests between ports `3000` and `3002`: the shared Redis bucket means both API instances use the same limit. An allowed request returns `200`; a request with no available token returns `429`.
 
-The API also exposes Prometheus metrics at `/metrics`. You can inspect them directly at `http://localhost:3000/metrics` or in Prometheus. Prometheus is configured to scrape `api1:3000` and `api2:3000` over the Compose network. In Grafana, the Prometheus data source URL should be `http://prometheus:9090`.
+The API also exposes Prometheus metrics at `/metrics`. Locally, you can inspect them at `http://localhost:3000/metrics` or in Prometheus. In production, `/metrics` requires the `METRICS_BEARER_TOKEN`; keep the Prometheus service private and configure it to send that token. Prometheus is configured to scrape `api1:3000` and `api2:3000` over the local Compose network. In Grafana, the Prometheus data source URL should be `http://prometheus:9090`.
 
 The web dashboard reads structured data from `/dashboard/overview` and `/dashboard/analytics?range=5m`. Analytics supports `5m`, `15m`, `1h`, and `24h` ranges and requires the Prometheus service to be running. The API queries Prometheus and returns chart-ready data; the browser does not call the Prometheus query API directly.
 
