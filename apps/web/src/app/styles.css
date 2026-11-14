@@ -192,6 +192,49 @@ button { color: inherit; font: inherit; }
 .history-time, .history-clock { color: var(--subtle); font-size: 8px; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .history-clock { font-size: 8px; }
 
+/* Policies */
+.policies-page { padding-top: 33px; }
+.policy-mode-banner { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 14px; padding: 14px 15px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); }
+.policy-mode-icon { display: grid; width: 20px; height: 20px; flex: 0 0 auto; place-items: center; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border)); border-radius: 50%; color: var(--accent); font-size: 11px; font-weight: 600; }
+.policy-mode-banner strong { color: var(--text); font-size: 10px; font-weight: 600; }
+.policy-mode-banner p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.6; }
+.policy-mode-banner code { color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 8px; overflow-wrap: anywhere; }
+.policy-mismatch { margin: 0 0 12px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--orange) 30%, var(--border)); border-radius: 6px; background: color-mix(in srgb, var(--orange) 7%, var(--surface)); color: var(--orange); font-size: 9px; line-height: 1.5; }
+.policy-summary-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 14px 0 22px; border-block: 1px solid var(--border); background: var(--surface); }
+.policy-summary-row > div { display: grid; gap: 7px; padding: 12px 15px; }
+.policy-summary-row > div + div { border-left: 1px solid var(--border-soft); }
+.policy-summary-row span { color: var(--muted); font-size: 9px; }
+.policy-summary-row strong { color: var(--text); font-size: 15px; font-weight: 550; font-variant-numeric: tabular-nums; }
+.policy-catalog-panel, .policy-instance-panel { padding: 18px; }
+.read-only-tag { padding: 4px 7px; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); font-size: 8px; font-weight: 600; letter-spacing: 0.08em; white-space: nowrap; }
+.policy-catalog-list { display: grid; gap: 10px; margin-top: 14px; }
+.policy-record { padding: 14px; border: 1px solid var(--border-soft); border-radius: 6px; background: color-mix(in srgb, var(--surface-elevated) 34%, var(--surface)); }
+.policy-record-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.policy-record-header > div { display: grid; justify-items: start; gap: 6px; }
+.policy-record-header p { margin: 0; color: var(--muted); font-size: 9px; }
+.policy-active-state { display: inline-flex; align-items: center; gap: 6px; color: var(--green); font-size: 9px; }
+.policy-active-state .status-dot { width: 6px; height: 6px; }
+.policy-detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 14px; border-block: 1px solid var(--border-soft); }
+.policy-detail-grid > div { display: grid; gap: 7px; padding: 12px 10px; }
+.policy-detail-grid > div:first-child { padding-left: 0; }
+.policy-detail-grid > div + div { border-left: 1px solid var(--border-soft); }
+.policy-detail-grid span, .policy-applied-to > span:first-child { color: var(--muted); font-size: 8px; }
+.policy-detail-grid strong { color: var(--text); font-size: 15px; font-weight: 550; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.policy-detail-grid small { color: var(--muted); font-size: 8px; font-weight: 450; letter-spacing: 0; }
+.policy-applied-to { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; padding-top: 11px; }
+.policy-instance-chip { padding: 4px 7px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); font-size: 8px; }
+.policy-page-empty { display: grid; min-height: 150px; align-content: center; justify-items: center; gap: 6px; color: var(--muted); font-size: 9px; text-align: center; }
+.policy-page-empty strong { color: var(--text); font-size: 10px; font-weight: 550; }
+.policy-page-empty p { max-width: 320px; margin: 0; color: var(--subtle); line-height: 1.5; }
+.loading-indicator { width: 17px; height: 17px; border: 1.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 800ms linear infinite; }
+.policy-instance-panel { margin-top: 14px; }
+.policy-instance-list { margin-top: 12px; }
+.policy-instance-row { display: flex; min-height: 48px; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--border-soft); }
+.policy-instance-name { display: flex; min-width: 0; align-items: center; gap: 9px; }
+.policy-instance-name > div { display: grid; gap: 4px; }
+.policy-instance-name strong { color: var(--text); font-size: 9px; font-weight: 550; }
+.policy-instance-name div > span { color: var(--muted); font-size: 8px; }
+
 .lower-grid { grid-template-columns: minmax(0, 1.15fr) minmax(270px, 0.85fr); margin-top: 14px; }
 .instances-panel, .policy-panel { min-height: 190px; padding: 17px 18px; }
 .instance-list { margin-top: 12px; }
@@ -236,6 +279,7 @@ button { color: inherit; font: inherit; }
 }
 @media (max-width: 520px) {
   .overview-page { padding: 24px 14px 28px; }
+  .policies-page { padding-top: 24px; }
   .playground-page { padding-top: 24px; }
   .page-heading { align-items: flex-start; flex-direction: column; margin-bottom: 18px; }
   .page-heading h1 { font-size: 23px; }
@@ -267,6 +311,14 @@ button { color: inherit; font: inherit; }
   .history-row { grid-template-columns: 42px 42px minmax(0, 1fr) 52px; gap: 6px; }
   .history-clock { display: none; }
   .response-status { max-width: 115px; font-size: 8px; }
+  .policy-mode-banner { padding: 12px; }
+  .policy-summary-row > div { padding: 10px 8px; }
+  .policy-summary-row span { font-size: 8px; line-height: 1.4; }
+  .policy-summary-row strong { font-size: 12px; }
+  .policy-catalog-panel, .policy-instance-panel { padding: 14px; }
+  .policy-detail-grid > div { padding-inline: 6px; }
+  .policy-detail-grid strong { font-size: 12px; }
+  .policy-detail-grid span { font-size: 7px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }

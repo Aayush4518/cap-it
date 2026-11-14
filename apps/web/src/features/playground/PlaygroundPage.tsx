@@ -205,7 +205,7 @@ function PlaygroundPage() {
           <div className="playground-footer">
             <label className="field-group burst-field"><span>Requests</span><select value={batchSize} onChange={(event) => setBatchSize(Number(event.target.value))}>{batchSizes.map((size) => <option key={size} value={size}>{size === 1 ? "One request" : `${size} in parallel`}</option>)}</select></label>
             <button className="send-button" type="submit" disabled={isSending}>
-              {isSending ? <><span className="send-spinner" aria-hidden="true" />Sending {batchSize === 1 ? "request" : `${batchSize} requests`}…</> : <><span aria-hidden="true">↑</span> Send {batchSize === 1 ? "request" : `${batchSize} requests`}</>}
+              {isSending ? <><span className="send-spinner" aria-hidden="true" />Sending {batchSize === 1 ? "request" : `${batchSize} requests`}…</> : <><span aria-hidden="true">↑</span> Fire {batchSize === 1 ? "request" : `${batchSize} requests`}</>}
             </button>
           </div>
           {validationError && <p className="playground-validation" role="alert">{validationError}</p>}
